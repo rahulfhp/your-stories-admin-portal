@@ -19,17 +19,19 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
-    // Initialize theme on mount
+    // Apply theme changes (blocking script handles initial load)
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-    
+  }, [theme]);
+
+  useEffect(() => {
     // Set loading to false after auth check
     setIsLoading(false);
-  }, [theme]);
+  }, []);
 
   // Don't render anything while checking authentication
   if (isLoading) {
@@ -38,11 +40,6 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
-  }
-
-  // Prevent login page flash when authenticated
-  if (isAuthenticated && pathname === "/") {
-    return null; // Don't render anything while redirecting
   }
 
   return (
