@@ -33,7 +33,7 @@ export default function Login() {
       login(response.admin, response.accessToken);
       
       toast.success("Login successful");
-      router.push("/dashboard");
+      router.push("/");
     } catch (error: any) {
       toast.error(error.message || "Login failed. Please try again.");
     } finally {

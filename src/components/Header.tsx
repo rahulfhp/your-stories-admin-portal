@@ -202,7 +202,7 @@ const Header: React.FC<HeaderProps> = ({
     try {
       await logout();
       toast.success("Logged out successfully");
-      router.push("/");
+      router.push("/login");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Logout failed. Please try again.");
@@ -258,7 +258,7 @@ const Header: React.FC<HeaderProps> = ({
             {/* Logo Section */}
             <div className="flex items-center">
               <Link
-                href="/dashboard"
+                href="/"
                 className="flex items-center"
                 onClick={closeMobileMenu}
               >
@@ -274,17 +274,7 @@ const Header: React.FC<HeaderProps> = ({
                   {/* Theme Switcher */}
                   <ThemeSwitcher />
 
-                  {(
-                    <Link href="/dashboard">
-                      <button
-                        className="px-4 py-2 rounded-xl font-medium text-sm transition-all duration-300 hover:scale-105 backdrop-blur-sm border cursor-pointer
-                 dark:border-white/20 dark:text-white/90 dark:hover:bg-white/10 dark:hover:border-white/30
-                 border-gray-300/40 text-gray-700 hover:bg-gray-100/20 hover:border-gray-400/50"
-                      >
-                        Stories
-                      </button>
-                    </Link>
-                  )}
+
 
                   {/* Logout Button */}
                   <button
@@ -345,19 +335,7 @@ const Header: React.FC<HeaderProps> = ({
                       </div>
                       <ThemeSwitcher />
                     </div>
-                    {(
-                      <Link href="/dashboard" onClick={closeMobileMenu}>
-                        <div
-                          className="flex items-center gap-3 py-3 px-3 rounded-xl transition-colors duration-200 
-                    dark:hover:bg-white/10 hover:bg-gray-100/20"
-                        >
-                          <PencilIcon className="w-5 h-5 dark:text-white/90 text-gray-700" />
-                          <span className="text-sm font-medium dark:text-white/90 text-gray-700">
-                            Stories
-                          </span>
-                        </div>
-                      </Link>
-                    )}
+
 
                     {/* Logout Button (mobile) */}
                     <div

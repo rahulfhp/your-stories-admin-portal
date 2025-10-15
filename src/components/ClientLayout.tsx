@@ -45,7 +45,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <>
       <AuthRedirect />
-      {pathname !== "/" && pathname !== "/login" && <Header />}
+      {pathname !== "/login" && <Header />}
       {children}
       <Toaster
         position="top-center"
