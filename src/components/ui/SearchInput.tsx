@@ -59,7 +59,7 @@ export function SearchInput({
         {inputValue && !isLoading && (
           <button
             onClick={handleClear}
-            className="text-muted-foreground hover:text-foreground transition-colors duration-200 flex-shrink-0"
+            className="text-muted-foreground hover:text-foreground transition-colors duration-200 flex-shrink-0 cursor-pointer"
             aria-label="Clear search"
           >
             <XMarkIcon className="w-4 h-4" />
@@ -72,7 +72,7 @@ export function SearchInput({
         onClick={handleSearch}
         disabled={isLoading || !inputValue.trim()}
         variant="default"
-        className="h-10 px-4 flex-shrink-0"
+        className="h-10 px-4 flex-shrink-0 cursor-pointer"
       >
         {isLoading ? "Searching..." : "Search"}
       </Button>

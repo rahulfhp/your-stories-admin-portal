@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminStore } from "@/stores/admin";
 import { Button } from "@/components/ui/button";
 import { Loader2, Check, X } from "lucide-react";
@@ -18,6 +18,10 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   const { storyId } = params;
   const router = useRouter();
 
+  const searchParams = useSearchParams();
+
+  const source = searchParams.get("source");
+
   const [confirmAction, setConfirmAction] = useState<
     null | "approve" | "reject"
   >(null);
@@ -26,14 +30,14 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
     currentStory,
     isLoading,
     error,
-    fetchStoryById,
+    fetchPendingStoryById,
     approveStories,
     rejectStories,
   } = useAdminStore();
 
   useEffect(() => {
-    fetchStoryById(storyId);
-  }, [fetchStoryById, storyId]);
+    fetchPendingStoryById(storyId);
+  }, [fetchPendingStoryById, storyId]);
 
   const handleApprove = () => setConfirmAction("approve");
 
@@ -67,7 +71,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
 
   if (error || !currentStory) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 pt-20">
         <div className="bg-card rounded-lg shadow-md p-6 text-center">
           <h2 className="text-2xl font-semibold mb-4">Error</h2>
           <p className="text-destructive mb-6">{error || "Story not found"}</p>
@@ -77,28 +81,30 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   }
 
   return (
-    <div className="mx-auto px-4 md:px-12 py-8 pt-30 bg-background text-foreground min-h-screen">
+    <div className="mx-auto px-4 md:px-12 py-8 pt-30 bg-background text-foreground">
       <div className="bg-card rounded-lg shadow-md p-6 mb-6">
         <div className="flex justify-between gap-6 items-start mb-6">
           <h1 className="text-3xl font-bold">{currentStory.storyTitle}</h1>
-          <div className="flex gap-3 flex-wrap">
-            <Button
-              variant="default"
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={handleApprove}
-            >
-              <Check className="h-4 w-4" />
-              Approve
-            </Button>
-            <Button
-              variant="destructive"
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={handleReject}
-            >
-              <X className="h-4 w-4" />
-              Reject
-            </Button>
-          </div>
+          {source == "pending" && (
+            <div className="flex gap-3 flex-wrap">
+              <Button
+                variant="default"
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={handleApprove}
+              >
+                <Check className="h-4 w-4" />
+                Approve
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={handleReject}
+              >
+                <X className="h-4 w-4" />
+                Reject
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

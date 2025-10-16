@@ -19,19 +19,19 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast.error("Please enter both email and password");
       return;
     }
-    
+
     try {
       setIsLoading(true);
       const response = await authService.login(email, password);
-      
+
       // Store auth data
       login(response.admin, response.accessToken);
-      
+
       toast.success("Login successful");
       router.push("/");
     } catch (error: any) {
@@ -89,9 +89,9 @@ export default function Login() {
               required
             />
           </div>
-          <Button 
-            type="submit" 
-            className="w-full cursor-pointer" 
+          <Button
+            type="submit"
+            className="w-32 cursor-pointer"
             disabled={isLoading}
           >
             {isLoading ? "Logging in..." : "Login"}
