@@ -80,7 +80,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[60vh]">
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -88,7 +88,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
 
   if (error || !currentStory) {
     return (
-      <div className="container mx-auto px-4 py-8 pt-24">
+      <div className="container mx-auto px-4 py-8 pt-24 min-h-screen">
         <div className="bg-card rounded-lg shadow-md p-6 text-center">
           <h2 className="text-2xl font-semibold mb-4">Error</h2>
           <p className="text-destructive mb-6">{error || "Story not found"}</p>
@@ -98,7 +98,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   }
 
   return (
-    <div className="mx-auto px-4 md:px-12 py-8 pt-30 bg-background text-foreground">
+    <div className="mx-auto px-4 md:px-12 py-8 pt-30 bg-background text-foreground min-h-screen">
       <div className="bg-card rounded-lg shadow-md p-6 mb-6">
         <div className="flex justify-between gap-6 items-start mb-6 flex-wrap">
           <h1 className="text-3xl font-bold">{currentStory.storyTitle}</h1>

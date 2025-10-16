@@ -80,7 +80,7 @@ export default function RejectPage() {
   }
 
   return (
-    <div className="mx-auto px-4 md:px-12 py-8 bg-background text-foreground pt-24">
+    <div className="mx-auto px-4 md:px-12 py-8 bg-background text-foreground pt-24 min-h-screen">
       <h1 className="text-3xl font-bold my-6">Rejected Stories</h1>
       <div className="bg-card rounded-lg shadow-md p-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">

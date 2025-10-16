@@ -72,14 +72,14 @@ export default function ApprovePage() {
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
+      <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto px-4 md:px-12 py-8 bg-background text-foreground pt-24">
+    <div className="mx-auto px-4 md:px-12 py-8 bg-background text-foreground pt-24 min-h-screen">
       <h1 className="text-3xl font-bold my-6">Approved Stories</h1>
       <div className="bg-card rounded-lg shadow-md p-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
