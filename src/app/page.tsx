@@ -9,6 +9,7 @@ import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/stores/auth";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -17,6 +18,9 @@ export default function DashboardPage() {
   const [isPaginating, setIsPaginating] = useState(false);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isLoading, setIsLoading] = useState(true);
+  const [confirmAction, setConfirmAction] = useState<
+    null | "approve" | "reject"
+  >(null);
 
   const {
     pendingStories,
@@ -43,7 +47,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (isLoading) return;
-    
+
     let mounted = true;
     const load = async () => {
       setIsPaginating(true);
@@ -80,8 +84,7 @@ export default function DashboardPage() {
       toast.error("No stories selected");
       return;
     }
-    await approveSelectedStories();
-    setSelectAll(false);
+    setConfirmAction("approve");
   };
 
   const handleRejectSelected = async () => {
@@ -89,8 +92,7 @@ export default function DashboardPage() {
       toast.error("No stories selected");
       return;
     }
-    await rejectSelectedStories();
-    setSelectAll(false);
+    setConfirmAction("reject");
   };
 
   const formatDate = (timestamp: number) => {
@@ -99,6 +101,16 @@ export default function DashboardPage() {
     } catch (error) {
       return "Invalid date";
     }
+  };
+
+  const handleModalConfirm = async () => {
+    if (confirmAction === "approve") {
+      await approveSelectedStories();
+    } else {
+      await rejectSelectedStories();
+    }
+    setConfirmAction(null);
+    setSelectAll(false);
   };
 
   // Show loading spinner while checking authentication
@@ -121,7 +133,7 @@ export default function DashboardPage() {
               variant="destructive"
               onClick={handleRejectSelected}
               disabled={selectedStoryIds.length === 0 || storiesLoading}
-              className="cursor-pointer w-full sm:w-auto" 
+              className="cursor-pointer w-full sm:w-auto"
             >
               Reject Selected
             </Button>
@@ -157,7 +169,13 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
-            <div className={`overflow-x-auto ${ (storiesLoading || isPaginating) ? "opacity-60 pointer-events-none transition-opacity duration-200" : "" }`}>
+            <div
+              className={`overflow-x-auto ${
+                storiesLoading || isPaginating
+                  ? "opacity-60 pointer-events-none transition-opacity duration-200"
+                  : ""
+              }`}
+            >
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b">
@@ -177,11 +195,7 @@ export default function DashboardPage() {
                 </thead>
                 <tbody>
                   {pendingStories.map((story) => (
-                    <tr
-                      key={story._id}
-                      className="border-b hover:bg-muted/50 cursor-pointer"
-                      onClick={() => handleViewStory(story._id)}
-                    >
+                    <tr key={story._id} className="border-b hover:bg-muted/50">
                       <td
                         className="py-3 px-4"
                         onClick={(e) => e.stopPropagation()}
@@ -225,6 +239,7 @@ export default function DashboardPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleViewStory(story._id)}
+                            className="cursor-pointer"
                           >
                             View
                           </Button>
@@ -273,6 +288,26 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+
+      {/* ConfirmModal for the approve and reject buttons */}
+      <ConfirmModal
+        open={!!confirmAction}
+        title={
+          confirmAction === "approve"
+            ? "Approve selected stories?"
+            : "Reject selected stories?"
+        }
+        description={
+          confirmAction === "approve"
+            ? "Once approved, these stories will be published and visible to users."
+            : "Once rejected, these stories will be removed from the pending list."
+        }
+        confirmLabel="Yes"
+        cancelLabel="No"
+        variant={confirmAction === "approve" ? "default" : "destructive"}
+        onConfirm={handleModalConfirm}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

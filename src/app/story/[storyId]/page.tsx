@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminStore } from "@/stores/admin";
 import { Button } from "@/components/ui/button";
 import { Loader2, Check, X } from "lucide-react";
 import { format } from "date-fns";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 interface StoryDetailPageProps {
   params: {
@@ -16,6 +17,10 @@ interface StoryDetailPageProps {
 export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   const { storyId } = params;
   const router = useRouter();
+
+  const [confirmAction, setConfirmAction] = useState<
+    null | "approve" | "reject"
+  >(null);
 
   const {
     currentStory,
@@ -30,15 +35,9 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
     fetchStoryById(storyId);
   }, [fetchStoryById, storyId]);
 
-  const handleApprove = async () => {
-    await approveStories([storyId]);
-    router.push("/");
-  };
+  const handleApprove = () => setConfirmAction("approve");
 
-  const handleReject = async () => {
-    await rejectStories([storyId]);
-    router.push("/");
-  };
+  const handleReject = () => setConfirmAction("reject");
 
   const formatDate = (timestamp: number) => {
     try {
@@ -46,6 +45,16 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
     } catch (error) {
       return "Invalid date";
     }
+  };
+
+  const handleModalConfirm = async () => {
+    if (confirmAction === "approve") {
+      await approveStories([storyId]);
+    } else {
+      await rejectStories([storyId]);
+    }
+    setConfirmAction(null);
+    router.push("/");
   };
 
   if (isLoading) {
@@ -139,6 +148,26 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
           </div>
         </div>
       </div>
+
+      {/* ConfirmModal for the approve and reject buttons */}
+      <ConfirmModal
+        open={!!confirmAction}
+        title={
+          confirmAction === "approve"
+            ? "Approve this story?"
+            : "Reject this story?"
+        }
+        description={
+          confirmAction === "approve"
+            ? "This story will be published and visible to users."
+            : "This story will be rejected and removed from the pending list."
+        }
+        confirmLabel="Yes"
+        cancelLabel="No"
+        variant={confirmAction === "approve" ? "default" : "destructive"}
+        onConfirm={handleModalConfirm}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }
