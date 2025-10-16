@@ -16,6 +16,8 @@ export interface PendingStory {
   upvoteCount: number;
   createdAt: string;
   updatedAt: string;
+  coverPicRef?: string;
+  profilePicRef?: string;
 }
 
 export interface PaginationInfo {
@@ -73,7 +75,7 @@ const getConfig = () => {
   // Safely access localStorage only on client side
   const authStorage = localStorage.getItem("auth-storage");
   console.log("Auth storage:", authStorage);
-  
+
   let accessToken = null;
   if (authStorage) {
     try {
@@ -154,7 +156,26 @@ export const adminService = {
       console.error('Error rejecting stories:', error);
       throw error;
     }
-  }
+  },
+
+  // Search pending stories Need to change route
+  searchPendingStories: async (
+    query: string,
+    page = 1,
+    limit = 10
+  ): Promise<any> => {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}searchStories/search`,
+        { query, page, limit },
+        getConfig()
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error searching pending stories:", error);
+      throw error;
+    }
+  },
 };
 
 export default adminService;

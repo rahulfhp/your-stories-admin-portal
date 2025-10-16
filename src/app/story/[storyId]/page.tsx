@@ -79,17 +79,9 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   return (
     <div className="mx-auto px-4 md:px-12 py-8 pt-30 bg-background text-foreground min-h-screen">
       <div className="bg-card rounded-lg shadow-md p-6 mb-6">
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex justify-between gap-6 items-start mb-6">
           <h1 className="text-3xl font-bold">{currentStory.storyTitle}</h1>
-          <div className="flex gap-3">
-            <Button
-              variant="destructive"
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={handleReject}
-            >
-              <X className="h-4 w-4" />
-              Reject
-            </Button>
+          <div className="flex gap-3 flex-wrap">
             <Button
               variant="default"
               className="flex items-center gap-2 cursor-pointer"
@@ -97,6 +89,14 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
             >
               <Check className="h-4 w-4" />
               Approve
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={handleReject}
+            >
+              <X className="h-4 w-4" />
+              Reject
             </Button>
           </div>
         </div>
@@ -132,14 +132,25 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
           </div>
         </div>
 
-        {currentStory.userDetails && (
-          <div className="mb-8">
-            <h3 className="text-lg font-medium mb-2">Author's Description</h3>
-            <div className="bg-muted/50 p-4 rounded-md">
-              <p>{currentStory.userDetails}</p>
+        <div className="w-full flex flex-row flex-wrap gap-4 md:gap-6 lg:gap-12">
+          {(currentStory.profilePicRef || currentStory.coverPicRef) && (
+            <div className="mb-6">
+              <img
+                src={currentStory.profilePicRef || currentStory.coverPicRef}
+                alt="Story Image"
+                className="w-full md:min-w-[600px] md:max-h-[400px] object-cover rounded-md"
+              />
             </div>
-          </div>
-        )}
+          )}
+          {currentStory.userDetails && (
+            <div className="mb-8">
+              <h3 className="text-lg font-medium mb-2">Author's Description</h3>
+              <div className="bg-muted/50 p-4 rounded-md text-wrap">
+                <p>{currentStory.userDetails}</p>
+              </div>
+            </div>
+          )}
+        </div>
 
         <div>
           <h3 className="text-lg font-medium mb-4">Story Content</h3>

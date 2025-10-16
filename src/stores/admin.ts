@@ -25,6 +25,7 @@ interface AdminState {
   rejectStories: (storyIds: string[]) => Promise<void>;
   approveSelectedStories: () => Promise<void>;
   rejectSelectedStories: () => Promise<void>;
+  searchPendingStories: (query: string, page?: number, limit?: number) => Promise<void>;
 }
 
 export const useAdminStore = create<AdminState>((set, get) => ({
@@ -180,7 +181,25 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       return;
     }
     await get().rejectStories(selectedStoryIds);
-  }
+  },
+
+  searchPendingStories: async (query: string, page = 1, limit = 10) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await adminService.searchPendingStories(query, page, limit);
+      set({
+        pendingStories: response.data.stories,
+        pagination: response.data.pagination,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Error searching pending stories:", error);
+      set({
+        error: "Failed to search stories. Please try again.",
+        isLoading: false,
+      });
+    }
+  },
 }));
 
 export default useAdminStore;
