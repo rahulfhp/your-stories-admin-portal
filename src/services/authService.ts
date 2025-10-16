@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.yourhourapp.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.yourhourapp.com/api/v1/';
 
 // Create axios instance with base configuration
 const api = axios.create({
@@ -26,7 +26,7 @@ api.interceptors.request.use(
 export const authService = {
   login: async (email: string, password: string) => {
     try {
-      const response = await api.post('/api/v1/admin/login', { email, password });
+      const response = await api.post('admin/login', { email, password });
       return response.data;
     } catch (error: any) {
       if (error.response) {
@@ -38,7 +38,7 @@ export const authService = {
   
   logout: async () => {
     try {
-      const response = await api.post('/api/v1/admin/logout');
+      const response = await api.post('admin/logout');
       return response.data;
     } catch (error: any) {
       if (error.response) {
