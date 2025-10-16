@@ -89,6 +89,7 @@ export default function Login() {
               required
             />
           </div>
+          <div className="flex items-center justify-center">
           <Button
             type="submit"
             className="w-32 cursor-pointer"
@@ -96,6 +97,7 @@ export default function Login() {
           >
             {isLoading ? "Logging in..." : "Login"}
           </Button>
+          </div>
         </form>
       </div>
     </div>

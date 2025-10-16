@@ -12,7 +12,7 @@ import { useAuthStore } from "@/stores/auth";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { SearchInput } from "@/components/ui/SearchInput";
 
-export default function DashboardPage() {
+export default function PendingPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectAll, setSelectAll] = useState(false);
@@ -35,7 +35,7 @@ export default function DashboardPage() {
     deselectAllStories,
     approveSelectedStories,
     rejectSelectedStories,
-    searchPendingStories,
+    searchStories,
   } = useAdminStore();
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function DashboardPage() {
   }, [fetchPendingStories, currentPage, isLoading]);
 
   const handleSearch = async (searchText: string) => {
-    await searchPendingStories(searchText, "pending", 1, 10);
+    await searchStories(searchText, "pending", 1, 10);
     setCurrentPage(1);
     setSelectAll(false);
   };
@@ -131,7 +131,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto px-4 md:px-12 py-8 bg-background text-foreground min-h-screen pt-24">
+    <div className="mx-auto px-4 md:px-12 py-8 bg-background text-foreground pt-24">
       <h1 className="text-3xl font-bold my-6">Pending Stories</h1>
       <div className="bg-card rounded-lg shadow-md p-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">

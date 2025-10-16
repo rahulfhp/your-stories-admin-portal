@@ -22,7 +22,7 @@ export default function RejectPage() {
     isLoading: storiesLoading,
     error,
     fetchRejectedStories,
-    searchPendingStories,
+    searchStories,
   } = useAdminStore();
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function RejectPage() {
   }, [fetchRejectedStories, currentPage, isLoading]);
 
   const handleSearch = async (searchText: string) => {
-    await searchPendingStories(searchText, "rejected", 1, 10);
+    await searchStories(searchText, "rejected", 1, 10);
     setCurrentPage(1);
   };
 
@@ -59,7 +59,7 @@ export default function RejectPage() {
   };
 
   const handleViewStory = (storyId: string) => {
-    router.push(`/story/${storyId}?source=approve`);
+    router.push(`/story/${storyId}?source=reject`);
   };
 
   const formatDate = (timestamp: number) => {
@@ -80,7 +80,7 @@ export default function RejectPage() {
   }
 
   return (
-    <div className="mx-auto px-4 md:px-12 py-8 bg-background text-foreground min-h-screen pt-24">
+    <div className="mx-auto px-4 md:px-12 py-8 bg-background text-foreground pt-24">
       <h1 className="text-3xl font-bold my-6">Rejected Stories</h1>
       <div className="bg-card rounded-lg shadow-md p-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">

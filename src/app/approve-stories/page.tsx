@@ -22,7 +22,7 @@ export default function ApprovePage() {
     isLoading: storiesLoading,
     error,
     fetchApprovedStories,
-    searchPendingStories,
+    searchStories,
   } = useAdminStore();
 
   useEffect(() => {
@@ -50,10 +50,9 @@ export default function ApprovePage() {
   }, [fetchApprovedStories, currentPage, isLoading]);
 
   const handleSearch = async (searchText: string) => {
-    await searchPendingStories(searchText, "published", 1, 10);
+    await searchStories(searchText, "published", 1, 10);
     setCurrentPage(1);
   };
-
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
@@ -80,7 +79,7 @@ export default function ApprovePage() {
   }
 
   return (
-    <div className="mx-auto px-4 md:px-12 py-8 bg-background text-foreground min-h-screen pt-24">
+    <div className="mx-auto px-4 md:px-12 py-8 bg-background text-foreground pt-24">
       <h1 className="text-3xl font-bold my-6">Approved Stories</h1>
       <div className="bg-card rounded-lg shadow-md p-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">

@@ -33,7 +33,7 @@ interface AdminState {
   rejectStories: (storyIds: string[]) => Promise<void>;
   approveSelectedStories: () => Promise<void>;
   rejectSelectedStories: () => Promise<void>;
-  searchPendingStories: (searchText: string, storiesType: string, page?: number, limit?: number) => Promise<void>;
+  searchStories: (searchText: string, storiesType: string, page?: number, limit?: number) => Promise<void>;
 }
 
 export const useAdminStore = create<AdminState>((set, get) => ({
@@ -281,17 +281,34 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     await get().rejectStories(selectedStoryIds);
   },
 
-  searchPendingStories: async (searchText: string, storiesType: string, page = 1, limit = 10) => {
+  // Updated search function to handle all story types
+  searchStories: async (searchText: string, storiesType: string, page = 1, limit = 10) => {
     set({ isLoading: true, error: null });
     try {
       const response = await adminService.searchPendingStories(searchText, storiesType, page, limit);
-      set({
-        pendingStories: response.data.stories,
-        pagination: response.data.pagination,
-        isLoading: false,
-      });
+
+      // Update the correct story array based on storiesType
+      if (storiesType === 'pending') {
+        set({
+          pendingStories: response.data.stories,
+          pagination: response.data.pagination,
+          isLoading: false,
+        });
+      } else if (storiesType === 'published') {
+        set({
+          approvedStories: response.data.stories,
+          pagination: response.data.pagination,
+          isLoading: false,
+        });
+      } else if (storiesType === 'rejected') {
+        set({
+          rejectedStories: response.data.stories,
+          pagination: response.data.pagination,
+          isLoading: false,
+        });
+      }
     } catch (error) {
-      console.error("Error searching pending stories:", error);
+      console.error("Error searching stories:", error);
       set({
         error: "Failed to search stories. Please try again.",
         isLoading: false,
