@@ -32,12 +32,12 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
 
   const handleApprove = async () => {
     await approveStories([storyId]);
-    router.push("/dashboard");
+    router.push("/");
   };
 
   const handleReject = async () => {
     await rejectStories([storyId]);
-    router.push("/dashboard");
+    router.push("/");
   };
 
   const formatDate = (timestamp: number) => {
@@ -68,7 +68,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 mt-10">
+    <div className="mx-auto px-4 md:px-12 py-8 pt-30 bg-background text-foreground min-h-screen">
       <div className="bg-card rounded-lg shadow-md p-6 mb-6">
         <div className="flex justify-between items-start mb-6">
           <h1 className="text-3xl font-bold">{currentStory.storyTitle}</h1>

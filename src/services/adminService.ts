@@ -71,16 +71,26 @@ export interface ApproveRejectResponse {
 // Create axios config - adjust headers as needed
 const getConfig = () => {
   // Safely access localStorage only on client side
-  const token =
-    typeof window !== "undefined"
-      ? window.localStorage.getItem("ys_access_token")
-      : null;
+  const authStorage = localStorage.getItem("auth-storage");
+  console.log("Auth storage:", authStorage);
+  
+  let accessToken = null;
+  if (authStorage) {
+    try {
+      const parsed = JSON.parse(authStorage);
+      // Zustand persist middleware stores data in a 'state' property
+      accessToken = parsed.state?.accessToken || parsed.accessToken;
+      console.log("Extracted token:", accessToken ? "Token found" : "No token");
+    } catch (error) {
+      console.error("Error parsing auth storage:", error);
+    }
+  }
 
   return {
     headers: {
       "Content-Type": "application/json",
       // Add authorization header if needed
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
       "ngrok-skip-browser-warning": "true", // Skip ngrok browser warning
     },
   };

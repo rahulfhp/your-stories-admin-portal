@@ -10,9 +10,14 @@ export default function AuthRedirect() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
-    // If user is authenticated and on the login page, redirect to dashboard
-    if (isAuthenticated && pathname === "/") {
-      router.replace("/dashboard");
+    // If user is authenticated and on the login page, redirect to home (dashboard)
+    if (isAuthenticated && pathname === "/login") {
+      router.replace("/");
+    }
+    
+    // If user is not authenticated and trying to access protected routes, redirect to login
+    if (!isAuthenticated && pathname !== "/login") {
+      router.replace("/login");
     }
   }, [isAuthenticated, pathname, router]);
 
