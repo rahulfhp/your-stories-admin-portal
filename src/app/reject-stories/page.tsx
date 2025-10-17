@@ -13,6 +13,7 @@ export default function RejectPage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [isPaginating, setIsPaginating] = useState(false);
+  const [searchText, setSearchText] = useState(""); // Track search state
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,18 +41,32 @@ export default function RejectPage() {
     let mounted = true;
     const load = async () => {
       setIsPaginating(true);
-      await fetchRejectedStories(currentPage, 10);
+
+      // Check if we're in search mode or normal mode
+      if (searchText) {
+        await searchStories(searchText, "rejected", currentPage, 10);
+      } else {
+        await fetchRejectedStories(currentPage, 10);
+      }
+
       if (mounted) setIsPaginating(false);
     };
     load();
     return () => {
       mounted = false;
     };
-  }, [fetchRejectedStories, currentPage, isLoading]);
+  }, [fetchRejectedStories, searchStories, currentPage, isLoading, searchText]);
 
-  const handleSearch = async (searchText: string) => {
-    await searchStories(searchText, "rejected", 1, 10);
-    // setCurrentPage(1);
+  const handleSearch = async (searchTerm: string) => {
+    setSearchText(searchTerm);
+    setCurrentPage(1); // Reset to page 1 when searching
+    await searchStories(searchTerm, "rejected", 1, 10);
+  };
+
+  const handleClearSearch = async () => {
+    setSearchText("");
+    setCurrentPage(1); // Reset to page 1 when clearing search
+    await fetchRejectedStories(1, 10);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -87,7 +102,7 @@ export default function RejectPage() {
           <SearchInput
             placeholder="Search rejected stories..."
             onSearch={handleSearch}
-            onClear={() => fetchRejectedStories(1, 10)}
+            onClear={handleClearSearch}
             isLoading={storiesLoading}
           />
         </div>
@@ -102,7 +117,13 @@ export default function RejectPage() {
             <Button
               variant="outline"
               className="mt-4"
-              onClick={() => fetchRejectedStories(currentPage, 10)}
+              onClick={() => {
+                if (searchText) {
+                  handleSearch(searchText);
+                } else {
+                  fetchRejectedStories(currentPage, 10);
+                }
+              }}
             >
               Retry
             </Button>

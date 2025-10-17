@@ -17,6 +17,7 @@ export default function PendingPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectAll, setSelectAll] = useState(false);
   const [isPaginating, setIsPaginating] = useState(false);
+  const [searchText, setSearchText] = useState(""); // Track search state
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isLoading, setIsLoading] = useState(true);
   const [confirmAction, setConfirmAction] = useState<
@@ -53,19 +54,33 @@ export default function PendingPage() {
     let mounted = true;
     const load = async () => {
       setIsPaginating(true);
-      await fetchPendingStories(currentPage, 10);
+
+      // Check if we're in search mode or normal mode
+      if (searchText) {
+        await searchStories(searchText, "pending", currentPage, 10);
+      } else {
+        await fetchPendingStories(currentPage, 10);
+      }
+
       if (mounted) setIsPaginating(false);
     };
     load();
     return () => {
       mounted = false;
     };
-  }, [fetchPendingStories, currentPage, isLoading]);
+  }, [fetchPendingStories, searchStories, currentPage, isLoading, searchText]);
 
-  const handleSearch = async (searchText: string) => {
-    await searchStories(searchText, "pending", 1, 10);
-    // setCurrentPage(1);
+  const handleSearch = async (searchTerm: string) => {
+    setSearchText(searchTerm);
+    setCurrentPage(1); // Reset to page 1 when searching
     setSelectAll(false);
+    await searchStories(searchTerm, "pending", 1, 10);
+  };
+
+  const handleClearSearch = async () => {
+    setSearchText("");
+    setCurrentPage(1); // Reset to page 1 when clearing search
+    await fetchPendingStories(1, 10);
   };
 
   const handleSelectAll = () => {
@@ -138,7 +153,7 @@ export default function PendingPage() {
           <SearchInput
             placeholder="Search pending stories..."
             onSearch={handleSearch}
-            onClear={() => fetchPendingStories(1, 10)}
+            onClear={handleClearSearch}
             isLoading={storiesLoading}
           />
           <div className="flex flex-wrap gap-3 w-full sm:w-auto">
@@ -171,7 +186,13 @@ export default function PendingPage() {
             <Button
               variant="outline"
               className="mt-4"
-              onClick={() => fetchPendingStories(currentPage, 10)}
+              onClick={() => {
+                if (searchText) {
+                  handleSearch(searchText);
+                } else {
+                  fetchPendingStories(currentPage, 10);
+                }
+              }}
             >
               Retry
             </Button>

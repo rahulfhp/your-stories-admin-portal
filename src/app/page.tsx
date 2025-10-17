@@ -62,8 +62,6 @@ export default function DashboardPage() {
       count: storiesInfo?.publishedStories || 0,
       icon: CheckCircle,
       iconColor: "text-green-500",
-      bgGradient:
-        "from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20",
       path: "/approve-stories",
     },
     {
@@ -71,8 +69,6 @@ export default function DashboardPage() {
       count: storiesInfo?.pendingStories || 0,
       icon: Clock,
       iconColor: "text-amber-500",
-      bgGradient:
-        "from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20",
       path: "/pending-stories",
     },
     {
@@ -80,8 +76,6 @@ export default function DashboardPage() {
       count: storiesInfo?.rejectedStories || 0,
       icon: XCircle,
       iconColor: "text-red-500",
-      bgGradient:
-        "from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20",
       path: "/reject-stories",
     },
   ];
@@ -90,12 +84,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background pt-24">
       <div className="mx-auto px-4 md:px-12 py-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2 text-foreground">
-            Admin Dashboard
-          </h1>
-          <p className="text-muted-foreground mb-8">
-            Manage and review all stories
-          </p>
+          <h1 className="text-3xl font-bold mb-8 text-foreground">Dashboard</h1>
 
           {storiesLoading ? (
             <div className="flex justify-center items-center h-64">
@@ -123,7 +112,7 @@ export default function DashboardPage() {
                   >
                     {/* Gradient Background */}
                     <div
-                      className={`absolute inset-0 bg-gradient-to-br ${card.bgGradient} opacity-50`}
+                      className={`absolute inset-0 bg-gradient-to-br opacity-50`}
                     />
 
                     {/* Content */}
@@ -149,8 +138,9 @@ export default function DashboardPage() {
                               className="w-22 cursor-pointer"
                               onClick={() => handleNavigate(card.path)}
                             >
-                              <span className="cursor-pointer">See All</span>
-                              <ChevronRight className="h-4 w-4 cursor-pointer" />
+                              <span className="cursor-pointer flex items-center gap-1">
+                                See All <ChevronRight className="h-4 w-4" />
+                              </span>
                             </Button>
                           </div>
 
@@ -160,16 +150,13 @@ export default function DashboardPage() {
 
                           {/* Count Display */}
                           <div className="my-6">
-                            <p className="text-4xl font-bold text-foreground text-center">
+                            <p className="text-5xl font-bold text-foreground text-center">
                               {card.count}
                             </p>
                           </div>
                         </div>
                       </div>
                     </div>
-
-                    {/* Decorative corner accent */}
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full" />
                   </div>
                 );
               })}

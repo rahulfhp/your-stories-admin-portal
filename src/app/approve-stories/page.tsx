@@ -13,6 +13,7 @@ export default function ApprovePage() {
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [isPaginating, setIsPaginating] = useState(false);
+  const [searchText, setSearchText] = useState(""); // Track search state
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,19 +41,34 @@ export default function ApprovePage() {
     let mounted = true;
     const load = async () => {
       setIsPaginating(true);
-      await fetchApprovedStories(currentPage, 10);
+
+      // Check if we're in search mode or normal mode
+      if (searchText) {
+        await searchStories(searchText, "published", currentPage, 10);
+      } else {
+        await fetchApprovedStories(currentPage, 10);
+      }
+
       if (mounted) setIsPaginating(false);
     };
     load();
     return () => {
       mounted = false;
     };
-  }, [fetchApprovedStories, currentPage, isLoading]);
+  }, [fetchApprovedStories, searchStories, currentPage, isLoading, searchText]);
 
-  const handleSearch = async (searchText: string) => {
-    await searchStories(searchText, "published", 1, 10);
-    // setCurrentPage(1);
+  const handleSearch = async (searchTerm: string) => {
+    setSearchText(searchTerm);
+    setCurrentPage(1); // Reset to page 1 when searching
+    await searchStories(searchTerm, "published", 1, 10);
   };
+
+  const handleClearSearch = async () => {
+    setSearchText("");
+    setCurrentPage(1); // Reset to page 1 when clearing search
+    await fetchApprovedStories(1, 10);
+  };
+
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
   };
@@ -86,7 +102,7 @@ export default function ApprovePage() {
           <SearchInput
             placeholder="Search approve stories..."
             onSearch={handleSearch}
-            onClear={() => fetchApprovedStories(1, 10)}
+            onClear={handleClearSearch}
             isLoading={storiesLoading}
           />
         </div>
@@ -101,7 +117,13 @@ export default function ApprovePage() {
             <Button
               variant="outline"
               className="mt-4"
-              onClick={() => fetchApprovedStories(currentPage, 10)}
+              onClick={() => {
+                if (searchText) {
+                  handleSearch(searchText);
+                } else {
+                  fetchApprovedStories(currentPage, 10);
+                }
+              }}
             >
               Retry
             </Button>
