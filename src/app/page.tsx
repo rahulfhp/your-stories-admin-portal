@@ -1,39 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminStore } from "@/stores/admin";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
-import { toast } from "react-hot-toast";
+import {
+  Loader2,
+  ChevronRight,
+  CheckCircle,
+  Clock,
+  XCircle,
+} from "lucide-react";
 import { useAuthStore } from "@/stores/auth";
-import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectAll, setSelectAll] = useState(false);
-  const [isPaginating, setIsPaginating] = useState(false);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const [isLoading, setIsLoading] = useState(true);
-  const [confirmAction, setConfirmAction] = useState<
-    null | "approve" | "reject"
-  >(null);
 
   const {
-    pendingStories,
-    pagination,
-    selectedStoryIds,
+    storiesInfo,
     isLoading: storiesLoading,
     error,
-    fetchPendingStories,
-    toggleSelectStory,
-    selectAllStories,
-    deselectAllStories,
-    approveSelectedStories,
-    rejectSelectedStories,
+    fetchAllStoriesInfo,
   } = useAdminStore();
 
   useEffect(() => {
@@ -42,79 +30,25 @@ export default function DashboardPage() {
       router.replace("/login");
       return;
     }
-    setIsLoading(false);
   }, [isAuthenticated, router]);
 
   useEffect(() => {
-    if (isLoading) return;
-
     let mounted = true;
     const load = async () => {
-      setIsPaginating(true);
-      await fetchPendingStories(currentPage, 10);
-      if (mounted) setIsPaginating(false);
+      await fetchAllStoriesInfo();
     };
     load();
     return () => {
       mounted = false;
     };
-  }, [fetchPendingStories, currentPage, isLoading]);
+  }, [fetchAllStoriesInfo]);
 
-  const handleSelectAll = () => {
-    if (selectAll) {
-      deselectAllStories();
-    } else {
-      selectAllStories();
-    }
-    setSelectAll(!selectAll);
-  };
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-    deselectAllStories();
-    setSelectAll(false);
-  };
-
-  const handleViewStory = (storyId: string) => {
-    router.push(`/story/${storyId}`);
-  };
-
-  const handleApproveSelected = async () => {
-    if (selectedStoryIds.length === 0) {
-      toast.error("No stories selected");
-      return;
-    }
-    setConfirmAction("approve");
-  };
-
-  const handleRejectSelected = async () => {
-    if (selectedStoryIds.length === 0) {
-      toast.error("No stories selected");
-      return;
-    }
-    setConfirmAction("reject");
-  };
-
-  const formatDate = (timestamp: number) => {
-    try {
-      return format(new Date(timestamp), "MMM d, yyyy");
-    } catch (error) {
-      return "Invalid date";
-    }
-  };
-
-  const handleModalConfirm = async () => {
-    if (confirmAction === "approve") {
-      await approveSelectedStories();
-    } else {
-      await rejectSelectedStories();
-    }
-    setConfirmAction(null);
-    setSelectAll(false);
+  const handleNavigate = (path: string) => {
+    router.push(path);
   };
 
   // Show loading spinner while checking authentication
-  if (isLoading) {
+  if (storiesLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -122,192 +56,127 @@ export default function DashboardPage() {
     );
   }
 
+  const cards = [
+    {
+      title: "Approved Stories",
+      count: storiesInfo?.publishedStories || 0,
+      icon: CheckCircle,
+      iconColor: "text-green-500",
+      bgGradient:
+        "from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20",
+      path: "/approve-stories",
+    },
+    {
+      title: "Pending Stories",
+      count: storiesInfo?.pendingStories || 0,
+      icon: Clock,
+      iconColor: "text-amber-500",
+      bgGradient:
+        "from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20",
+      path: "/pending-stories",
+    },
+    {
+      title: "Rejected Stories",
+      count: storiesInfo?.rejectedStories || 0,
+      icon: XCircle,
+      iconColor: "text-red-500",
+      bgGradient:
+        "from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-950/20",
+      path: "/reject-stories",
+    },
+  ];
+
   return (
-    <div className="mx-auto px-4 md:px-12 py-8 bg-background text-foreground min-h-screen pt-20">
-      <h1 className="text-3xl font-bold my-6">Admin Dashboard</h1>
-      <div className="bg-card rounded-lg shadow-md p-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-          <h2 className="text-xl sm:text-2xl font-semibold">Pending Stories</h2>
-          <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-            <Button
-              variant="destructive"
-              onClick={handleRejectSelected}
-              disabled={selectedStoryIds.length === 0 || storiesLoading}
-              className="cursor-pointer w-full sm:w-auto"
-            >
-              Reject Selected
-            </Button>
-            <Button
-              variant="default"
-              onClick={handleApproveSelected}
-              disabled={selectedStoryIds.length === 0 || storiesLoading}
-              className="cursor-pointer w-full sm:w-auto"
-            >
-              Approve Selected
-            </Button>
-          </div>
-        </div>
+    <div className="min-h-screen bg-background pt-24">
+      <div className="mx-auto px-4 md:px-12 py-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold mb-2 text-foreground">
+            Admin Dashboard
+          </h1>
+          <p className="text-muted-foreground mb-8">
+            Manage and review all stories
+          </p>
 
-        {storiesLoading && pendingStories.length === 0 ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : error ? (
-          <div className="text-center text-destructive p-6">
-            <p>{error}</p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => fetchPendingStories(currentPage, 10)}
-            >
-              Retry
-            </Button>
-          </div>
-        ) : pendingStories.length === 0 ? (
-          <div className="text-center p-6">
-            <p className="text-muted-foreground">No pending stories found</p>
-          </div>
-        ) : (
-          <>
-            <div
-              className={`overflow-x-auto ${
-                storiesLoading || isPaginating
-                  ? "opacity-60 pointer-events-none transition-opacity duration-200"
-                  : ""
-              }`}
-            >
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="py-3 px-4 text-left">
-                      <Checkbox
-                        checked={selectAll}
-                        onCheckedChange={handleSelectAll}
-                        aria-label="Select all stories"
-                      />
-                    </th>
-                    <th className="py-3 px-4 text-left">Title</th>
-                    <th className="py-3 px-4 text-left">Author</th>
-                    <th className="py-3 px-4 text-left">Submitted</th>
-                    <th className="py-3 px-4 text-left">Tags</th>
-                    <th className="py-3 px-4 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingStories.map((story) => (
-                    <tr key={story._id} className="border-b hover:bg-muted/50">
-                      <td
-                        className="py-3 px-4"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Checkbox
-                          checked={selectedStoryIds.includes(story._id)}
-                          onCheckedChange={() => toggleSelectStory(story._id)}
-                          aria-label={`Select story ${story.storyTitle}`}
-                        />
-                      </td>
-                      <td className="py-3 px-4 font-medium">
-                        {story.storyTitle}
-                      </td>
-                      <td className="py-3 px-4">{story.userName}</td>
-                      <td className="py-3 px-4">
-                        {formatDate(story.submissionDate)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex flex-wrap gap-1">
-                          {story.tagList.slice(0, 2).map((tag, index) => (
-                            <span
-                              key={index}
-                              className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {story.tagList.length > 2 && (
-                            <span className="text-xs text-muted-foreground">
-                              +{story.tagList.length - 2}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td
-                        className="py-3 px-4"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewStory(story._id)}
-                            className="cursor-pointer"
-                          >
-                            View
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {storiesLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
+          ) : error ? (
+            <div className="text-center text-destructive p-6 bg-destructive/10 rounded-lg">
+              <p>{error}</p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => fetchAllStoriesInfo()}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {cards.map((card, index) => {
+                const Icon = card.icon;
+                return (
+                  <div
+                    key={index}
+                    className="group relative bg-card rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-border"
+                  >
+                    {/* Gradient Background */}
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${card.bgGradient} opacity-50`}
+                    />
 
-            {pagination && (
-              <div className="flex justify-between items-center mt-6">
-                <div className="text-sm text-muted-foreground">
-                  Showing {pendingStories.length} of {pagination.totalStories}{" "}
-                  stories
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={!pagination.hasPrevPage}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm">
-                    Page {pagination.currentPage} of {pagination.totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={!pagination.hasNextPage}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                  {(storiesLoading || isPaginating) && (
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  )}
-                </div>
-              </div>
-            )}
-          </>
-        )}
+                    {/* Content */}
+                    <div className="relative p-6">
+                      {/* Icon and Count */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between gap-3 mb-3">
+                            <div className="flex items-center-safe gap-3">
+                              <div
+                                className={`rounded-lg bg-background/80 backdrop-blur-sm ${card.iconColor}`}
+                              >
+                                <Icon className="w-6" />
+                              </div>
+                              <h2 className="text-lg font-semibold text-foreground">
+                                {card.title}
+                              </h2>
+                            </div>
+
+                            {/* See All Button */}
+                            <Button
+                              variant="default"
+                              className="w-22 cursor-pointer"
+                              onClick={() => handleNavigate(card.path)}
+                            >
+                              <span className="cursor-pointer">See All</span>
+                              <ChevronRight className="h-4 w-4 cursor-pointer" />
+                            </Button>
+                          </div>
+
+                          <p className="text-sm text-muted-foreground">
+                            {card.count === 1 ? "Story Count" : "Stories Count"}
+                          </p>
+
+                          {/* Count Display */}
+                          <div className="my-6">
+                            <p className="text-4xl font-bold text-foreground text-center">
+                              {card.count}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Decorative corner accent */}
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary/10 to-transparent rounded-bl-full" />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* ConfirmModal for the approve and reject buttons */}
-      <ConfirmModal
-        open={!!confirmAction}
-        title={
-          confirmAction === "approve"
-            ? "Approve selected stories?"
-            : "Reject selected stories?"
-        }
-        description={
-          confirmAction === "approve"
-            ? "Once approved, these stories will be published and visible to users."
-            : "Once rejected, these stories will be removed from the pending list."
-        }
-        confirmLabel="Yes"
-        cancelLabel="No"
-        variant={confirmAction === "approve" ? "default" : "destructive"}
-        onConfirm={handleModalConfirm}
-        onCancel={() => setConfirmAction(null)}
-      />
     </div>
   );
 }

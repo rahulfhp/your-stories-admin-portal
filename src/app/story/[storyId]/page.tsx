@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminStore } from "@/stores/admin";
 import { Button } from "@/components/ui/button";
 import { Loader2, Check, X } from "lucide-react";
@@ -17,6 +17,8 @@ interface StoryDetailPageProps {
 export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   const { storyId } = params;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const source = searchParams.get("source"); // 'pending', 'approve', or 'reject'
 
   const [confirmAction, setConfirmAction] = useState<
     null | "approve" | "reject"
@@ -26,14 +28,32 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
     currentStory,
     isLoading,
     error,
-    fetchStoryById,
+    fetchPendingStoryById,
+    fetchApprovedStoryById,
+    fetchRejectedStoryById,
     approveStories,
     rejectStories,
   } = useAdminStore();
 
   useEffect(() => {
-    fetchStoryById(storyId);
-  }, [fetchStoryById, storyId]);
+    // Fetch the appropriate story based on source
+    if (source === "pending") {
+      fetchPendingStoryById(storyId);
+    } else if (source === "approve") {
+      fetchApprovedStoryById(storyId);
+    } else if (source === "reject") {
+      fetchRejectedStoryById(storyId);
+    } else {
+      // Default to pending if no source is specified
+      fetchPendingStoryById(storyId);
+    }
+  }, [
+    storyId,
+    source,
+    fetchPendingStoryById,
+    fetchApprovedStoryById,
+    fetchRejectedStoryById,
+  ]);
 
   const handleApprove = () => setConfirmAction("approve");
 
@@ -50,16 +70,17 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   const handleModalConfirm = async () => {
     if (confirmAction === "approve") {
       await approveStories([storyId]);
-    } else {
+      router.push("/");
+    } else if (confirmAction === "reject") {
       await rejectStories([storyId]);
+      router.push("/");
     }
     setConfirmAction(null);
-    router.push("/");
   };
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[60vh]">
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -67,7 +88,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
 
   if (error || !currentStory) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 pt-24 min-h-screen">
         <div className="bg-card rounded-lg shadow-md p-6 text-center">
           <h2 className="text-2xl font-semibold mb-4">Error</h2>
           <p className="text-destructive mb-6">{error || "Story not found"}</p>
@@ -79,26 +100,29 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   return (
     <div className="mx-auto px-4 md:px-12 py-8 pt-30 bg-background text-foreground min-h-screen">
       <div className="bg-card rounded-lg shadow-md p-6 mb-6">
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex justify-between gap-6 items-start mb-6 flex-wrap">
           <h1 className="text-3xl font-bold">{currentStory.storyTitle}</h1>
-          <div className="flex gap-3">
-            <Button
-              variant="destructive"
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={handleReject}
-            >
-              <X className="h-4 w-4" />
-              Reject
-            </Button>
-            <Button
-              variant="default"
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={handleApprove}
-            >
-              <Check className="h-4 w-4" />
-              Approve
-            </Button>
-          </div>
+          {/* Only show approve/reject buttons when coming from pending screen */}
+          {source === "pending" && (
+            <div className="flex gap-3 flex-wrap">
+              <Button
+                variant="default"
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={handleApprove}
+              >
+                <Check className="h-4 w-4" />
+                Approve
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={handleReject}
+              >
+                <X className="h-4 w-4" />
+                Reject
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -132,10 +156,21 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
           </div>
         </div>
 
+        <div className="w-full flex items-center justify-center">
+          {(currentStory.profilePicRef || currentStory.coverPicRef) && (
+            <div className="mb-6 w-full md:w-[600px] aspect-[16/9]">
+              <img
+                src={currentStory.profilePicRef || currentStory.coverPicRef}
+                alt="Story Image"
+                className="w-full h-full object-cover rounded-md"
+              />
+            </div>
+          )}
+        </div>
         {currentStory.userDetails && (
           <div className="mb-8">
             <h3 className="text-lg font-medium mb-2">Author's Description</h3>
-            <div className="bg-muted/50 p-4 rounded-md">
+            <div className="bg-muted/50 p-4 rounded-md text-wrap">
               <p>{currentStory.userDetails}</p>
             </div>
           </div>

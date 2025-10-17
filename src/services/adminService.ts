@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-export interface PendingStory {
+export interface Story {
   _id: string;
   storyTitle: string;
   storyContent: string;
@@ -16,6 +16,8 @@ export interface PendingStory {
   upvoteCount: number;
   createdAt: string;
   updatedAt: string;
+  coverPicRef?: string;
+  profilePicRef?: string;
 }
 
 export interface PaginationInfo {
@@ -31,7 +33,7 @@ export interface PendingStoriesResponse {
   success: boolean;
   message: string;
   data: {
-    stories: PendingStory[];
+    stories: Story[];
     pagination: PaginationInfo;
   };
 }
@@ -39,7 +41,7 @@ export interface PendingStoriesResponse {
 export interface StoryDetailResponse {
   success: boolean;
   message: string;
-  data: PendingStory;
+  data: Story;
 }
 
 export interface ApproveRejectResponse {
@@ -72,8 +74,7 @@ export interface ApproveRejectResponse {
 const getConfig = () => {
   // Safely access localStorage only on client side
   const authStorage = localStorage.getItem("auth-storage");
-  console.log("Auth storage:", authStorage);
-  
+
   let accessToken = null;
   if (authStorage) {
     try {
@@ -98,6 +99,49 @@ const getConfig = () => {
 
 
 export const adminService = {
+
+  // Get all the stories information
+  getAllStoriesInfo: async (): Promise<any> => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}admin/stories-counts`,
+        getConfig()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching stories details:', error);
+      throw error;
+    }
+  },
+
+  // Get approved stories with pagination
+  getApprovedStories: async (page: number = 1, limit: number = 10): Promise<PendingStoriesResponse> => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}publishedStories?page=${page}&limit=${limit}`,
+        getConfig()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching approved stories:', error);
+      throw error;
+    }
+  },
+
+  // Get a single approved story by ID
+  getApprovedStoryById: async (storyId: string): Promise<StoryDetailResponse> => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}publishedStories/${storyId}`,
+        getConfig()
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching story with ID ${storyId}:`, error);
+      throw error;
+    }
+  },
+
   // Get pending stories with pagination
   getPendingStories: async (page: number = 1, limit: number = 10): Promise<PendingStoriesResponse> => {
     try {
@@ -117,6 +161,34 @@ export const adminService = {
     try {
       const response = await axios.get(
         `${API_BASE_URL}pendingStories/${storyId}`,
+        getConfig()
+      );
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching story with ID ${storyId}:`, error);
+      throw error;
+    }
+  },
+
+  // Get rejected stories with pagination
+  getRejectedStories: async (page: number = 1, limit: number = 10): Promise<PendingStoriesResponse> => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}rejectStories/rejected?page=${page}&limit=${limit}`,
+        getConfig()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching rejected stories:', error);
+      throw error;
+    }
+  },
+
+  // Get a single rejected story by ID
+  getRejectedStoryById: async (storyId: string): Promise<StoryDetailResponse> => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}rejectStories/rejected/${storyId}`,
         getConfig()
       );
       return response.data;
@@ -154,7 +226,29 @@ export const adminService = {
       console.error('Error rejecting stories:', error);
       throw error;
     }
-  }
+  },
+
+  // Search stories
+  searchPendingStories: async (
+    searchText: string,
+    storiesType: string,
+    page = 1,
+    limit = 10
+  ): Promise<any> => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}admin/search-stories`,
+        {
+          params: { searchText, storiesType, page, limit },
+          ...getConfig(),
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error searching pending stories:", error);
+      throw error;
+    }
+  },
 };
 
 export default adminService;
