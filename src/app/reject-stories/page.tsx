@@ -51,7 +51,7 @@ export default function RejectPage() {
 
   const handleSearch = async (searchText: string) => {
     await searchStories(searchText, "rejected", 1, 10);
-    setCurrentPage(1);
+    // setCurrentPage(1);
   };
 
   const handlePageChange = (newPage: number) => {

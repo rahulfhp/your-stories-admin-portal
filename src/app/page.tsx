@@ -146,7 +146,7 @@ export default function DashboardPage() {
                             {/* See All Button */}
                             <Button
                               variant="default"
-                              className="w-24 cursor-pointer"
+                              className="w-22 cursor-pointer"
                               onClick={() => handleNavigate(card.path)}
                             >
                               <span className="cursor-pointer">See All</span>
@@ -154,13 +154,14 @@ export default function DashboardPage() {
                             </Button>
                           </div>
 
+                          <p className="text-sm text-muted-foreground">
+                            {card.count === 1 ? "Story Count" : "Stories Count"}
+                          </p>
+
                           {/* Count Display */}
-                          <div className="mb-6">
-                            <p className="text-4xl font-bold text-foreground mb-1">
+                          <div className="my-6">
+                            <p className="text-4xl font-bold text-foreground text-center">
                               {card.count}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {card.count === 1 ? "story" : "stories"}
                             </p>
                           </div>
                         </div>

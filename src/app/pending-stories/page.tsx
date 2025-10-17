@@ -64,7 +64,7 @@ export default function PendingPage() {
 
   const handleSearch = async (searchText: string) => {
     await searchStories(searchText, "pending", 1, 10);
-    setCurrentPage(1);
+    // setCurrentPage(1);
     setSelectAll(false);
   };
 

@@ -51,7 +51,7 @@ export default function ApprovePage() {
 
   const handleSearch = async (searchText: string) => {
     await searchStories(searchText, "published", 1, 10);
-    setCurrentPage(1);
+    // setCurrentPage(1);
   };
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
