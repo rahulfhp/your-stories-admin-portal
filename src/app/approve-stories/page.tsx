@@ -57,16 +57,16 @@ export default function ApprovePage() {
     };
   }, [fetchApprovedStories, searchStories, currentPage, isLoading, searchText]);
 
-  const handleSearch = async (searchTerm: string) => {
+  const handleSearch = (searchTerm: string) => {
     setSearchText(searchTerm);
     setCurrentPage(1); // Reset to page 1 when searching
-    await searchStories(searchTerm, "published", 1, 10);
+    // The useEffect will handle the API call
   };
 
-  const handleClearSearch = async () => {
+  const handleClearSearch = () => {
     setSearchText("");
     setCurrentPage(1); // Reset to page 1 when clearing search
-    await fetchApprovedStories(1, 10);
+    // The useEffect will handle the API call
   };
 
   const handlePageChange = (newPage: number) => {

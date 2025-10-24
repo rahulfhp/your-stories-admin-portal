@@ -70,17 +70,17 @@ export default function PendingPage() {
     };
   }, [fetchPendingStories, searchStories, currentPage, isLoading, searchText]);
 
-  const handleSearch = async (searchTerm: string) => {
+  const handleSearch = (searchTerm: string) => {
     setSearchText(searchTerm);
     setCurrentPage(1); // Reset to page 1 when searching
     setSelectAll(false);
-    await searchStories(searchTerm, "pending", 1, 10);
+    // The useEffect will handle the API call
   };
 
-  const handleClearSearch = async () => {
+  const handleClearSearch = () => {
     setSearchText("");
     setCurrentPage(1); // Reset to page 1 when clearing search
-    await fetchPendingStories(1, 10);
+    // The useEffect will handle the API call
   };
 
   const handleSelectAll = () => {
