@@ -288,7 +288,7 @@ export default function PendingPage() {
             {pagination && (
               <div className="flex justify-between items-center mt-6">
                 <div className="text-sm text-muted-foreground">
-                  Showing {pendingStories.length} of {pagination.totalStories}{" "}
+                  Showing {(pagination.currentPage - 1) * pagination.storiesPerPage + 1}-{Math.min(pagination.currentPage * pagination.storiesPerPage, pagination.totalStories)} of {pagination.totalStories}{" "}
                   stories
                 </div>
                 <div className="flex items-center gap-2">

@@ -7,6 +7,11 @@ interface AdminState {
   approvedStories: Story[];
   pendingStories: Story[];
   rejectedStories: Story[];
+  
+  // Cache for pagination
+  approvedStoriesCache: Record<number, Story[]>;
+  pendingStoriesCache: Record<number, Story[]>;
+  rejectedStoriesCache: Record<number, Story[]>;
 
   selectedStoryIds: string[];
   currentStory: Story | null;
@@ -41,6 +46,9 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   approvedStories: [],
   pendingStories: [],
   rejectedStories: [],
+  approvedStoriesCache: {},
+  pendingStoriesCache: {},
+  rejectedStoriesCache: {},
   selectedStoryIds: [],
   currentStory: null,
   pagination: null,
@@ -67,9 +75,38 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchApprovedStories: async (page = 1, limit = 10) => {
     set({ isLoading: true, error: null });
     try {
+      // Check if we already have this page cached
+      const cachedData = get().approvedStoriesCache[page];
+      if (cachedData) {
+        // Use cached data instead of making an API call
+        const currentPagination = get().pagination;
+        set({
+          approvedStories: cachedData,
+          pagination: currentPagination ? {
+            currentPage: page,
+            totalPages: currentPagination.totalPages || 1,
+            totalStories: currentPagination.totalStories || cachedData.length,
+            storiesPerPage: currentPagination.storiesPerPage || limit,
+            hasNextPage: currentPagination.hasNextPage || false,
+            hasPrevPage: page > 1
+          } : null,
+          isLoading: false
+        });
+        return;
+      }
+      
+      // If not cached, fetch from API
       const response = await adminService.getApprovedStories(page, limit);
+      
+      // Update cache with new data
+      const updatedCache = {
+        ...get().approvedStoriesCache,
+        [page]: response.data.stories
+      };
+      
       set({
         approvedStories: response.data.stories,
+        approvedStoriesCache: updatedCache,
         pagination: response.data.pagination,
         isLoading: false
       });
@@ -102,9 +139,38 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchPendingStories: async (page = 1, limit = 10) => {
     set({ isLoading: true, error: null });
     try {
+      // Check if we already have this page cached
+      const cachedData = get().pendingStoriesCache[page];
+      if (cachedData) {
+        // Use cached data instead of making an API call
+        const currentPagination = get().pagination;
+        set({
+          pendingStories: cachedData,
+          pagination: currentPagination ? {
+            currentPage: page,
+            totalPages: currentPagination.totalPages || 1,
+            totalStories: currentPagination.totalStories || cachedData.length,
+            storiesPerPage: currentPagination.storiesPerPage || limit,
+            hasNextPage: currentPagination.hasNextPage || false,
+            hasPrevPage: page > 1
+          } : null,
+          isLoading: false
+        });
+        return;
+      }
+      
+      // If not cached, fetch from API
       const response = await adminService.getPendingStories(page, limit);
+      
+      // Update cache with new data
+      const updatedCache = {
+        ...get().pendingStoriesCache,
+        [page]: response.data.stories
+      };
+      
       set({
         pendingStories: response.data.stories,
+        pendingStoriesCache: updatedCache,
         pagination: response.data.pagination,
         isLoading: false
       });
@@ -137,9 +203,38 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchRejectedStories: async (page = 1, limit = 10) => {
     set({ isLoading: true, error: null });
     try {
+      // Check if we already have this page cached
+      const cachedData = get().rejectedStoriesCache[page];
+      if (cachedData) {
+        // Use cached data instead of making an API call
+        const currentPagination = get().pagination;
+        set({
+          rejectedStories: cachedData,
+          pagination: currentPagination ? {
+            currentPage: page,
+            totalPages: currentPagination.totalPages || 1,
+            totalStories: currentPagination.totalStories || cachedData.length,
+            storiesPerPage: currentPagination.storiesPerPage || limit,
+            hasNextPage: currentPagination.hasNextPage || false,
+            hasPrevPage: page > 1
+          } : null,
+          isLoading: false
+        });
+        return;
+      }
+      
+      // If not cached, fetch from API
       const response = await adminService.getRejectedStories(page, limit);
+      
+      // Update cache with new data
+      const updatedCache = {
+        ...get().rejectedStoriesCache,
+        [page]: response.data.stories
+      };
+      
       set({
         rejectedStories: response.data.stories,
+        rejectedStoriesCache: updatedCache,
         pagination: response.data.pagination,
         isLoading: false
       });
