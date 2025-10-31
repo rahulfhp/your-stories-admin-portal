@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminStore } from "@/stores/admin";
 import { Button } from "@/components/ui/button";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useAuthStore } from "@/stores/auth";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { ImageSelectionModal } from "@/components/ui/ImageSelectionModal";
+import { toast } from "react-hot-toast";
+import { adminService } from "@/services/adminService";
 
 export default function ApprovePage() {
   const router = useRouter();
@@ -16,6 +19,8 @@ export default function ApprovePage() {
   const [searchText, setSearchText] = useState(""); // Track search state
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isLoading, setIsLoading] = useState(true);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedStoryId, setSelectedStoryId] = useState("");
 
   const {
     approvedStories,
@@ -24,6 +29,7 @@ export default function ApprovePage() {
     error,
     fetchApprovedStories,
     searchStories,
+    updateStoryCoverImage,
   } = useAdminStore();
 
   useEffect(() => {
@@ -66,7 +72,19 @@ export default function ApprovePage() {
   const handleClearSearch = () => {
     setSearchText("");
     setCurrentPage(1); // Reset to page 1 when clearing search
-    // The useEffect will handle the API call
+    
+    // Force a fresh API call by bypassing cache completely
+    // This will update the pagination counts at the bottom
+    adminService.getApprovedStories(1, 10).then(response => {
+      useAdminStore.setState({
+        approvedStories: response.data.stories,
+        pagination: response.data.pagination,
+        approvedStoriesCache: {}, // Clear cache
+        isLoading: false
+      });
+    }).catch(error => {
+      console.error('Error fetching approved stories:', error);
+    });
   };
 
   const handlePageChange = (newPage: number) => {
@@ -75,6 +93,30 @@ export default function ApprovePage() {
 
   const handleViewStory = (storyId: string) => {
     router.push(`/story/${storyId}?source=approve`);
+  };
+
+  const handleEditCoverImage = (storyId: string) => {
+    setSelectedStoryId(storyId);
+    setImageModalOpen(true);
+  };
+
+  const handleSelectImage = async (imageUrl: string) => {
+    if (selectedStoryId) {
+      try {
+        await updateStoryCoverImage(selectedStoryId, imageUrl, 'approved');
+        // Refresh the stories list
+        if (searchText) {
+          await searchStories(searchText, "published", currentPage, 10);
+        } else {
+          await fetchApprovedStories(currentPage, 10);
+        }
+        // Toast is already shown in the admin store
+      } catch (error) {
+        console.error("Error updating cover image:", error);
+        // Toast is already shown in the admin store
+      }
+    }
+    setImageModalOpen(false);
   };
 
   const formatDate = (timestamp: number) => {
@@ -191,6 +233,15 @@ export default function ApprovePage() {
                           >
                             View
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditCoverImage(story._id)}
+                            className="cursor-pointer border-black"
+                          >
+                            <ImageIcon className="h-4 w-4 mr-1" />
+                            {story.coverPicRef || story.profilePicRef ? 'Edit Cover' : 'Add Cover'}
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -236,6 +287,14 @@ export default function ApprovePage() {
           </>
         )}
       </div>
+
+      {/* Image Selection Modal */}
+      <ImageSelectionModal
+        open={imageModalOpen}
+        onClose={() => setImageModalOpen(false)}
+        onSelectImage={handleSelectImage}
+        title="Choose Cover Image"
+      />
     </div>
   );
 }

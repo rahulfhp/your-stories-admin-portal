@@ -1,21 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminStore } from "@/stores/admin";
 import { Button } from "@/components/ui/button";
-import { Loader2, Check, X } from "lucide-react";
+import { Loader2, Check, X, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { ImageSelectionModal } from "@/components/ui/ImageSelectionModal";
 
 interface StoryDetailPageProps {
-  params: {
+  params: Promise<{
     storyId: string;
-  };
+  }>;
 }
 
 export default function StoryDetailPage({ params }: StoryDetailPageProps) {
-  const { storyId } = params;
+  const { storyId } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const source = searchParams.get("source"); // 'pending', 'approve', or 'reject'
@@ -23,6 +24,9 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   const [confirmAction, setConfirmAction] = useState<
     null | "approve" | "reject"
   >(null);
+  
+  const [imageEditType, setImageEditType] = useState<null | "profile" | "cover">(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   const {
     currentStory,
@@ -33,6 +37,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
     fetchRejectedStoryById,
     approveStories,
     rejectStories,
+    updateStoryCoverImage
   } = useAdminStore();
 
   useEffect(() => {
@@ -76,6 +81,36 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
       router.push("/");
     }
     setConfirmAction(null);
+  };
+  
+  const handleEditImage = (type: "profile" | "cover") => {
+    setImageEditType(type);
+    setIsImageModalOpen(true);
+  };
+  
+  const handleSelectImage = async (imageUrl: string) => {
+    if (currentStory && imageEditType) {
+      try {
+        // Determine the stories type based on the source
+        const storiesType = source === "approve" ? "approved" : "pending";
+        
+        // Use the updateStoryCoverImage from the admin store instead of calling the API directly
+        // The admin store already shows a toast notification, so we don't need to show one here
+        await updateStoryCoverImage(storyId, imageUrl, storiesType as 'pending' | 'approved');
+        
+        // Update UI immediately for better UX
+        if (imageEditType === "profile") {
+          currentStory.profilePicRef = imageUrl;
+        } else {
+          currentStory.coverPicRef = imageUrl;
+        }
+      } catch (error) {
+        console.error("Error updating image:", error);
+        // No need to show error toast here as it's already shown in the admin store
+      }
+    }
+    setIsImageModalOpen(false);
+    setImageEditType(null);
   };
 
   if (isLoading) {
@@ -158,12 +193,23 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
 
         <div className="w-full flex items-center justify-center">
           {(currentStory.profilePicRef || currentStory.coverPicRef) && (
-            <div className="mb-6 w-full md:w-[600px] aspect-[16/9]">
+            <div className="mb-6 w-full md:w-[600px] aspect-[16/9] relative group">
               <img
                 src={currentStory.profilePicRef || currentStory.coverPicRef}
                 alt="Story Image"
                 className="w-full h-full object-cover rounded-md"
               />
+              <div className="absolute top-2 right-2 flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="opacity-90 hover:opacity-100"
+                  onClick={() => handleEditImage(currentStory.coverPicRef ? "cover" : "profile")}
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit Cover Image
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -202,6 +248,17 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
         variant={confirmAction === "approve" ? "default" : "destructive"}
         onConfirm={handleModalConfirm}
         onCancel={() => setConfirmAction(null)}
+      />
+      
+      {/* Image Selection Modal */}
+      <ImageSelectionModal
+        open={isImageModalOpen}
+        onClose={() => {
+          setIsImageModalOpen(false);
+          setImageEditType(null);
+        }}
+        onSelectImage={handleSelectImage}
+        title="Choose Cover Image"
       />
     </div>
   );

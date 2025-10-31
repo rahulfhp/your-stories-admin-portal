@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminStore } from "@/stores/admin";
+import adminService from "@/services/adminService";
 import { Button } from "@/components/ui/button";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
@@ -66,7 +67,18 @@ export default function RejectPage() {
   const handleClearSearch = () => {
     setSearchText("");
     setCurrentPage(1); // Reset to page 1 when clearing search
-    // The useEffect will handle the API call
+    
+    // Force a fresh API call by bypassing cache completely
+    adminService.getRejectedStories(1, 10).then(response => {
+      useAdminStore.setState({
+        rejectedStories: response.data.stories,
+        pagination: response.data.pagination,
+        rejectedStoriesCache: {}, // Clear cache
+        isLoading: false
+      });
+    }).catch(error => {
+      console.error('Error fetching rejected stories:', error);
+    });
   };
 
   const handlePageChange = (newPage: number) => {
