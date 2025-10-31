@@ -43,6 +43,7 @@ interface AdminState {
   rejectSelectedStories: () => Promise<void>;
   searchStories: (searchText: string, storiesType: string, page?: number, limit?: number) => Promise<void>;
   updateStoryCoverImage: (storyId: string, profilePicRef: string, storiesType: 'pending' | 'approved') => Promise<void>;
+  updateStory: (storyId: string, storiesType: 'pending' | 'approved', updateData: Partial<Story>) => Promise<void>;
   clearCache: (storyType: 'pending' | 'published' | 'rejected') => void;
 }
 
@@ -60,6 +61,63 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   pagination: null,
   isLoading: false,
   error: null,
+
+  updateStory: async (storyId: string, storiesType: 'pending' | 'approved', updateData: Partial<Story>) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Use the API service to update the story
+      const response = await adminService.updateStory(storyId, storiesType, updateData);
+      
+      if (response.success) {
+        // Update the story in the appropriate list and cache
+        const updateStoryInList = (stories: Story[]) => {
+          return stories.map(story => 
+            story._id === storyId ? { ...story, ...updateData } : story
+          );
+        };
+        
+        // Update state without triggering a page refresh
+        set(state => ({
+          approvedStories: updateStoryInList(state.approvedStories),
+          pendingStories: updateStoryInList(state.pendingStories),
+          rejectedStories: updateStoryInList(state.rejectedStories),
+          currentStory: state.currentStory?._id === storyId 
+            ? { ...state.currentStory, ...updateData } 
+            : state.currentStory,
+          isLoading: false
+        }));
+        
+        // Update caches without triggering navigation
+        Object.keys(get().approvedStoriesCache).forEach(page => {
+          const pageNum = parseInt(page);
+          set(state => ({
+            approvedStoriesCache: {
+              ...state.approvedStoriesCache,
+              [pageNum]: updateStoryInList(state.approvedStoriesCache[pageNum])
+            }
+          }));
+        });
+        
+        Object.keys(get().pendingStoriesCache).forEach(page => {
+          const pageNum = parseInt(page);
+          set(state => ({
+            pendingStoriesCache: {
+              ...state.pendingStoriesCache,
+              [pageNum]: updateStoryInList(state.pendingStoriesCache[pageNum])
+            }
+          }));
+        });
+        
+        toast.success('Story updated successfully');
+      } else {
+        set({ isLoading: false, error: 'Failed to update story' });
+        toast.error('Failed to update story');
+      }
+    } catch (error: any) {
+      set({ isLoading: false, error: error.message || 'Failed to update story' });
+      toast.error(error.message || 'Failed to update story');
+    }
+  },
 
   updateStoryCoverImage: async (storyId: string, profilePicRef: string, storiesType: 'pending' | 'approved') => {
     set({ isLoading: true, error: null });
