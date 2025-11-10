@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminStore } from "@/stores/admin";
 import { Button } from "@/components/ui/button";
 import { Loader2, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
@@ -14,6 +14,7 @@ import { adminService } from "@/services/adminService";
 
 export default function ApprovePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [isPaginating, setIsPaginating] = useState(false);
   const [searchText, setSearchText] = useState(""); // Track search state
@@ -31,6 +32,27 @@ export default function ApprovePage() {
     searchStories,
     updateStoryCoverImage,
   } = useAdminStore();
+
+  // Update currentPage and searchText when URL search params change
+  useEffect(() => {
+    const pageFromUrl = searchParams.get('page');
+    const searchFromUrl = searchParams.get('search');
+    
+    if (pageFromUrl) {
+      const pageNum = parseInt(pageFromUrl, 10);
+      if (!isNaN(pageNum) && pageNum > 0) {
+        setCurrentPage(pageNum);
+      }
+    } else {
+      setCurrentPage(1);
+    }
+    
+    if (searchFromUrl) {
+      setSearchText(searchFromUrl);
+    } else {
+      setSearchText("");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     // Check authentication first
@@ -67,12 +89,20 @@ export default function ApprovePage() {
     setSearchText(searchTerm);
     setCurrentPage(1); // Reset to page 1 when searching
     // The useEffect will handle the API call
+    // Update URL with search parameter
+    const url = new URL(window.location.href);
+    url.searchParams.set('search', searchTerm);
+    url.searchParams.set('page', '1');
+    window.history.pushState({}, '', url);
   };
 
   const handleClearSearch = () => {
     setSearchText("");
     setCurrentPage(1); // Reset to page 1 when clearing search
-    
+    const url = new URL(window.location.href);
+    url.searchParams.delete('search');
+    url.searchParams.set('page', '1');
+    window.history.pushState({}, '', url);
     // Force a fresh API call by bypassing cache completely
     // This will update the pagination counts at the bottom
     adminService.getApprovedStories(1, 10).then(response => {
@@ -89,10 +119,30 @@ export default function ApprovePage() {
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
+    // Update URL with new page number
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', newPage.toString());
+    
+    // Keep search parameter if it exists
+    if (searchText) {
+      url.searchParams.set('search', searchText);
+    }
+    
+    window.history.pushState({}, '', url);
   };
 
   const handleViewStory = (storyId: string) => {
-    router.push(`/story/${storyId}?source=approve`);
+    // Pass current page and search text as query parameters
+    const params = new URLSearchParams({
+      source: 'approve',
+      returnPage: currentPage.toString(),
+    });
+    
+    if (searchText) {
+      params.set('returnSearch', searchText);
+    }
+    
+    router.push(`/story/${storyId}?${params.toString()}`);
   };
 
   const handleEditCoverImage = (storyId: string) => {
@@ -143,6 +193,7 @@ export default function ApprovePage() {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <SearchInput
             placeholder="Search approve stories..."
+            value={searchText}
             onSearch={handleSearch}
             onClear={handleClearSearch}
             isLoading={storiesLoading}

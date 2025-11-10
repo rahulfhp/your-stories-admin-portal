@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 
 interface SearchInputProps {
   placeholder?: string;
+  value?: string; // Add external value prop
   onSearch: (query: string) => void;
   onClear?: () => void;
   isLoading?: boolean;
@@ -13,11 +14,19 @@ interface SearchInputProps {
 
 export function SearchInput({
   placeholder = "Search stories...",
+  value, // Accept external value
   onSearch,
   onClear,
   isLoading = false,
 }: SearchInputProps) {
   const [inputValue, setInputValue] = useState("");
+
+  // Sync internal state with external value prop
+  useEffect(() => {
+    if (value !== undefined) {
+      setInputValue(value);
+    }
+  }, [value]);
 
   const handleSearch = () => {
     if (!inputValue.trim() || isLoading) return;

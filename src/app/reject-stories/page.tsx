@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminStore } from "@/stores/admin";
 import adminService from "@/services/adminService";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,9 @@ import { SearchInput } from "@/components/ui/SearchInput";
 
 export default function RejectPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Initialize currentPage from URL query parameter, default to 1
   const [currentPage, setCurrentPage] = useState(1);
   const [isPaginating, setIsPaginating] = useState(false);
   const [searchText, setSearchText] = useState(""); // Track search state
@@ -26,6 +29,27 @@ export default function RejectPage() {
     fetchRejectedStories,
     searchStories,
   } = useAdminStore();
+
+  // Update currentPage and searchText when URL search params change
+  useEffect(() => {
+    const pageFromUrl = searchParams.get("page");
+    const searchFromUrl = searchParams.get("search");
+
+    if (pageFromUrl) {
+      const pageNum = parseInt(pageFromUrl, 10);
+      if (!isNaN(pageNum) && pageNum > 0) {
+        setCurrentPage(pageNum);
+      }
+    } else {
+      setCurrentPage(1);
+    }
+
+    if (searchFromUrl) {
+      setSearchText(searchFromUrl);
+    } else {
+      setSearchText("");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     // Check authentication first
@@ -62,31 +86,65 @@ export default function RejectPage() {
     setSearchText(searchTerm);
     setCurrentPage(1); // Reset to page 1 when searching
     // The useEffect will handle the API call
+    // Update URL with search parameter
+    const url = new URL(window.location.href);
+    url.searchParams.set("search", searchTerm);
+    url.searchParams.set("page", "1");
+    window.history.pushState({}, "", url);
   };
 
   const handleClearSearch = () => {
     setSearchText("");
     setCurrentPage(1); // Reset to page 1 when clearing search
-    
+
+    // Update URL - remove search parameter
+    const url = new URL(window.location.href);
+    url.searchParams.delete("search");
+    url.searchParams.set("page", "1");
+    window.history.pushState({}, "", url);
+
     // Force a fresh API call by bypassing cache completely
-    adminService.getRejectedStories(1, 10).then(response => {
-      useAdminStore.setState({
-        rejectedStories: response.data.stories,
-        pagination: response.data.pagination,
-        rejectedStoriesCache: {}, // Clear cache
-        isLoading: false
+    adminService
+      .getRejectedStories(1, 10)
+      .then((response) => {
+        useAdminStore.setState({
+          rejectedStories: response.data.stories,
+          pagination: response.data.pagination,
+          rejectedStoriesCache: {}, // Clear cache
+          isLoading: false,
+        });
+      })
+      .catch((error) => {
+        console.error("Error fetching rejected stories:", error);
       });
-    }).catch(error => {
-      console.error('Error fetching rejected stories:', error);
-    });
   };
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
+    // Update URL with new page number
+    const url = new URL(window.location.href);
+    url.searchParams.set("page", newPage.toString());
+
+    // Keep search parameter if it exists
+    if (searchText) {
+      url.searchParams.set("search", searchText);
+    }
+
+    window.history.pushState({}, "", url);
   };
 
   const handleViewStory = (storyId: string) => {
-    router.push(`/story/${storyId}?source=reject`);
+    // Pass current page and search text as query parameters
+    const params = new URLSearchParams({
+      source: 'reject',
+      returnPage: currentPage.toString(),
+    });
+    
+    if (searchText) {
+      params.set('returnSearch', searchText);
+    }
+    
+    router.push(`/story/${storyId}?${params.toString()}`);
   };
 
   const formatDate = (timestamp: number) => {
@@ -113,6 +171,7 @@ export default function RejectPage() {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <SearchInput
             placeholder="Search rejected stories..."
+            value={searchText}
             onSearch={handleSearch}
             onClear={handleClearSearch}
             isLoading={storiesLoading}
@@ -214,8 +273,14 @@ export default function RejectPage() {
             {pagination && (
               <div className="flex justify-between items-center mt-6">
                 <div className="text-sm text-muted-foreground">
-                  Showing {(pagination.currentPage - 1) * pagination.storiesPerPage + 1}-{Math.min(pagination.currentPage * pagination.storiesPerPage, pagination.totalStories)} of {pagination.totalStories}{" "}
-                  stories
+                  Showing{" "}
+                  {(pagination.currentPage - 1) * pagination.storiesPerPage + 1}
+                  -
+                  {Math.min(
+                    pagination.currentPage * pagination.storiesPerPage,
+                    pagination.totalStories
+                  )}{" "}
+                  of {pagination.totalStories} stories
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
