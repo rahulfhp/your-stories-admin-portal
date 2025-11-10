@@ -99,6 +99,46 @@ const getConfig = () => {
 
 
 export const adminService = {
+  // Update story fields
+  updateStory: async (storyId: string, storiesType: 'pending' | 'approved', updateData: Partial<Story>): Promise<any> => {
+    try {
+      // Destructure the updateData to match API request body format
+      const requestBody = {
+        storyId,
+        storiesType,
+        ...updateData
+      };
+      
+      const response = await axios.put(
+        `${API_BASE_URL}admin/update-story`,
+        requestBody,
+        getConfig()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error updating story:', error);
+      throw error;
+    }
+  },
+  
+  // Update story cover image
+  updateStoryCoverImage: async (storyId: string, imageUrl: string, storiesType: 'pending' | 'approved'): Promise<any> => {
+    try {
+      const response = await axios.put(
+        `${API_BASE_URL}admin/update-story`,
+        { 
+          storyId,
+          profilePicRef: imageUrl,
+          storiesType
+        },
+        getConfig()
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error updating story cover image:', error);
+      throw error;
+    }
+  },
 
   // Get all the stories information
   getAllStoriesInfo: async (): Promise<any> => {

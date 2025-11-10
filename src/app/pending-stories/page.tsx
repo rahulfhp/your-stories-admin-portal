@@ -1,28 +1,56 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminStore } from "@/stores/admin";
+import adminService from "@/services/adminService";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/stores/auth";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { ImageSelectionModal } from "@/components/ui/ImageSelectionModal";
 
 export default function PendingPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Initialize currentPage from URL query parameter, default to 1
   const [currentPage, setCurrentPage] = useState(1);
   const [selectAll, setSelectAll] = useState(false);
   const [isPaginating, setIsPaginating] = useState(false);
   const [searchText, setSearchText] = useState(""); // Track search state
+  
+  // Update currentPage and searchText when URL search params change
+  useEffect(() => {
+    const pageFromUrl = searchParams.get('page');
+    const searchFromUrl = searchParams.get('search');
+    
+    if (pageFromUrl) {
+      const pageNum = parseInt(pageFromUrl, 10);
+      if (!isNaN(pageNum) && pageNum > 0) {
+        setCurrentPage(pageNum);
+      }
+    } else {
+      setCurrentPage(1);
+    }
+    
+    if (searchFromUrl) {
+      setSearchText(searchFromUrl);
+    } else {
+      setSearchText("");
+    }
+  }, [searchParams]);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isLoading, setIsLoading] = useState(true);
   const [confirmAction, setConfirmAction] = useState<
     null | "approve" | "reject"
   >(null);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedStoryId, setSelectedStoryId] = useState("");
 
   const {
     pendingStories,
@@ -37,6 +65,7 @@ export default function PendingPage() {
     approveSelectedStories,
     rejectSelectedStories,
     searchStories,
+    updateStoryCoverImage,
   } = useAdminStore();
 
   useEffect(() => {
@@ -70,17 +99,39 @@ export default function PendingPage() {
     };
   }, [fetchPendingStories, searchStories, currentPage, isLoading, searchText]);
 
-  const handleSearch = async (searchTerm: string) => {
+  const handleSearch = (searchTerm: string) => {
     setSearchText(searchTerm);
     setCurrentPage(1); // Reset to page 1 when searching
     setSelectAll(false);
-    await searchStories(searchTerm, "pending", 1, 10);
+    
+    // Update URL with search parameter
+    const url = new URL(window.location.href);
+    url.searchParams.set('search', searchTerm);
+    url.searchParams.set('page', '1');
+    window.history.pushState({}, '', url);
   };
 
-  const handleClearSearch = async () => {
+  const handleClearSearch = () => {
     setSearchText("");
     setCurrentPage(1); // Reset to page 1 when clearing search
-    await fetchPendingStories(1, 10);
+    
+    // Update URL - remove search parameter
+    const url = new URL(window.location.href);
+    url.searchParams.delete('search');
+    url.searchParams.set('page', '1');
+    window.history.pushState({}, '', url);
+    
+    // Force a fresh API call by bypassing cache completely
+    adminService.getPendingStories(1, 10).then(response => {
+      useAdminStore.setState({
+        pendingStories: response.data.stories,
+        pagination: response.data.pagination,
+        pendingStoriesCache: {}, // Clear cache
+        isLoading: false
+      });
+    }).catch(error => {
+      console.error('Error fetching pending stories:', error);
+    });
   };
 
   const handleSelectAll = () => {
@@ -96,10 +147,55 @@ export default function PendingPage() {
     setCurrentPage(newPage);
     deselectAllStories();
     setSelectAll(false);
+    
+    // Update URL with new page number
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', newPage.toString());
+    
+    // Keep search parameter if it exists
+    if (searchText) {
+      url.searchParams.set('search', searchText);
+    }
+    
+    window.history.pushState({}, '', url);
   };
 
   const handleViewStory = (storyId: string) => {
-    router.push(`/story/${storyId}?source=pending`);
+    // Pass current page and search text as query parameters
+    const params = new URLSearchParams({
+      source: 'pending',
+      returnPage: currentPage.toString(),
+    });
+    
+    if (searchText) {
+      params.set('returnSearch', searchText);
+    }
+    
+    router.push(`/story/${storyId}?${params.toString()}`);
+  };
+
+  const handleEditCoverImage = (storyId: string) => {
+    setSelectedStoryId(storyId);
+    setImageModalOpen(true);
+  };
+
+  const handleSelectImage = async (imageUrl: string) => {
+    if (selectedStoryId) {
+      try {
+        await updateStoryCoverImage(selectedStoryId, imageUrl, 'pending');
+        // Refresh the stories list
+        if (searchText) {
+          searchStories(searchText, 'pending');
+        } else {
+          fetchPendingStories();
+        }
+        // Toast is already shown in the admin store
+      } catch (error) {
+        console.error("Error updating cover image:", error);
+        // Toast is already shown in the admin store
+      }
+    }
+    setImageModalOpen(false);
   };
 
   const handleApproveSelected = async () => {
@@ -152,6 +248,7 @@ export default function PendingPage() {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <SearchInput
             placeholder="Search pending stories..."
+            value={searchText}
             onSearch={handleSearch}
             onClear={handleClearSearch}
             isLoading={storiesLoading}
@@ -277,6 +374,15 @@ export default function PendingPage() {
                           >
                             View
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditCoverImage(story._id)}
+                            className="cursor-pointer border-black"
+                          >
+                            <ImageIcon className="h-4 w-4 mr-1" />
+                            {story.coverPicRef || story.profilePicRef ? 'Edit Cover' : 'Add Cover'}
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -288,7 +394,7 @@ export default function PendingPage() {
             {pagination && (
               <div className="flex justify-between items-center mt-6">
                 <div className="text-sm text-muted-foreground">
-                  Showing {pendingStories.length} of {pagination.totalStories}{" "}
+                  Showing {(pagination.currentPage - 1) * pagination.storiesPerPage + 1}-{Math.min(pagination.currentPage * pagination.storiesPerPage, pagination.totalStories)} of {pagination.totalStories}{" "}
                   stories
                 </div>
                 <div className="flex items-center gap-2">
@@ -341,6 +447,14 @@ export default function PendingPage() {
         variant={confirmAction === "approve" ? "default" : "destructive"}
         onConfirm={handleModalConfirm}
         onCancel={() => setConfirmAction(null)}
+      />
+
+      {/* Image Selection Modal */}
+      <ImageSelectionModal
+        open={imageModalOpen}
+        onClose={() => setImageModalOpen(false)}
+        onSelectImage={handleSelectImage}
+        title="Choose Cover Image"
       />
     </div>
   );

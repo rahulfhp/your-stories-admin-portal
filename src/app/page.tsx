@@ -44,6 +44,18 @@ export default function DashboardPage() {
   }, [fetchAllStoriesInfo]);
 
   const handleNavigate = (path: string) => {
+    // Reset all pagination data before navigating
+    if (path === "/approve-stories") {
+      useAdminStore.getState().clearCache('published');
+    } else if (path === "/pending-stories") {
+      useAdminStore.getState().clearCache('pending');
+    } else if (path === "/reject-stories") {
+      useAdminStore.getState().clearCache('rejected');
+    }
+    
+    // Also reset the pagination state directly
+    useAdminStore.setState({ pagination: null });
+    
     router.push(path);
   };
 

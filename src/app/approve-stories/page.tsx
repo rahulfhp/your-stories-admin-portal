@@ -1,21 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminStore } from "@/stores/admin";
 import { Button } from "@/components/ui/button";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useAuthStore } from "@/stores/auth";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { ImageSelectionModal } from "@/components/ui/ImageSelectionModal";
+import { toast } from "react-hot-toast";
+import { adminService } from "@/services/adminService";
 
 export default function ApprovePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [isPaginating, setIsPaginating] = useState(false);
   const [searchText, setSearchText] = useState(""); // Track search state
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isLoading, setIsLoading] = useState(true);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedStoryId, setSelectedStoryId] = useState("");
 
   const {
     approvedStories,
@@ -24,7 +30,29 @@ export default function ApprovePage() {
     error,
     fetchApprovedStories,
     searchStories,
+    updateStoryCoverImage,
   } = useAdminStore();
+
+  // Update currentPage and searchText when URL search params change
+  useEffect(() => {
+    const pageFromUrl = searchParams.get('page');
+    const searchFromUrl = searchParams.get('search');
+    
+    if (pageFromUrl) {
+      const pageNum = parseInt(pageFromUrl, 10);
+      if (!isNaN(pageNum) && pageNum > 0) {
+        setCurrentPage(pageNum);
+      }
+    } else {
+      setCurrentPage(1);
+    }
+    
+    if (searchFromUrl) {
+      setSearchText(searchFromUrl);
+    } else {
+      setSearchText("");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     // Check authentication first
@@ -57,24 +85,88 @@ export default function ApprovePage() {
     };
   }, [fetchApprovedStories, searchStories, currentPage, isLoading, searchText]);
 
-  const handleSearch = async (searchTerm: string) => {
+  const handleSearch = (searchTerm: string) => {
     setSearchText(searchTerm);
     setCurrentPage(1); // Reset to page 1 when searching
-    await searchStories(searchTerm, "published", 1, 10);
+    // The useEffect will handle the API call
+    // Update URL with search parameter
+    const url = new URL(window.location.href);
+    url.searchParams.set('search', searchTerm);
+    url.searchParams.set('page', '1');
+    window.history.pushState({}, '', url);
   };
 
-  const handleClearSearch = async () => {
+  const handleClearSearch = () => {
     setSearchText("");
     setCurrentPage(1); // Reset to page 1 when clearing search
-    await fetchApprovedStories(1, 10);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('search');
+    url.searchParams.set('page', '1');
+    window.history.pushState({}, '', url);
+    // Force a fresh API call by bypassing cache completely
+    // This will update the pagination counts at the bottom
+    adminService.getApprovedStories(1, 10).then(response => {
+      useAdminStore.setState({
+        approvedStories: response.data.stories,
+        pagination: response.data.pagination,
+        approvedStoriesCache: {}, // Clear cache
+        isLoading: false
+      });
+    }).catch(error => {
+      console.error('Error fetching approved stories:', error);
+    });
   };
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
+    // Update URL with new page number
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', newPage.toString());
+    
+    // Keep search parameter if it exists
+    if (searchText) {
+      url.searchParams.set('search', searchText);
+    }
+    
+    window.history.pushState({}, '', url);
   };
 
   const handleViewStory = (storyId: string) => {
-    router.push(`/story/${storyId}?source=approve`);
+    // Pass current page and search text as query parameters
+    const params = new URLSearchParams({
+      source: 'approve',
+      returnPage: currentPage.toString(),
+    });
+    
+    if (searchText) {
+      params.set('returnSearch', searchText);
+    }
+    
+    router.push(`/story/${storyId}?${params.toString()}`);
+  };
+
+  const handleEditCoverImage = (storyId: string) => {
+    setSelectedStoryId(storyId);
+    setImageModalOpen(true);
+  };
+
+  const handleSelectImage = async (imageUrl: string) => {
+    if (selectedStoryId) {
+      try {
+        await updateStoryCoverImage(selectedStoryId, imageUrl, 'approved');
+        // Refresh the stories list
+        if (searchText) {
+          await searchStories(searchText, "published", currentPage, 10);
+        } else {
+          await fetchApprovedStories(currentPage, 10);
+        }
+        // Toast is already shown in the admin store
+      } catch (error) {
+        console.error("Error updating cover image:", error);
+        // Toast is already shown in the admin store
+      }
+    }
+    setImageModalOpen(false);
   };
 
   const formatDate = (timestamp: number) => {
@@ -101,6 +193,7 @@ export default function ApprovePage() {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <SearchInput
             placeholder="Search approve stories..."
+            value={searchText}
             onSearch={handleSearch}
             onClear={handleClearSearch}
             isLoading={storiesLoading}
@@ -191,6 +284,15 @@ export default function ApprovePage() {
                           >
                             View
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditCoverImage(story._id)}
+                            className="cursor-pointer border-black"
+                          >
+                            <ImageIcon className="h-4 w-4 mr-1" />
+                            {story.coverPicRef || story.profilePicRef ? 'Edit Cover' : 'Add Cover'}
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -202,7 +304,7 @@ export default function ApprovePage() {
             {pagination && (
               <div className="flex justify-between items-center mt-6">
                 <div className="text-sm text-muted-foreground">
-                  Showing {approvedStories.length} of {pagination.totalStories}{" "}
+                  Showing {(pagination.currentPage - 1) * pagination.storiesPerPage + 1}-{Math.min(pagination.currentPage * pagination.storiesPerPage, pagination.totalStories)} of {pagination.totalStories}{" "}
                   stories
                 </div>
                 <div className="flex items-center gap-2">
@@ -236,6 +338,14 @@ export default function ApprovePage() {
           </>
         )}
       </div>
+
+      {/* Image Selection Modal */}
+      <ImageSelectionModal
+        open={imageModalOpen}
+        onClose={() => setImageModalOpen(false)}
+        onSelectImage={handleSelectImage}
+        title="Choose Cover Image"
+      />
     </div>
   );
 }
