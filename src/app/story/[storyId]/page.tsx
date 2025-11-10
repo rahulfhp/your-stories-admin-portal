@@ -216,7 +216,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
   };
   
   const handleCancelEdit = () => {
-    // Reset to original values and redirect to story page
+    // Reset to original values
     if (currentStory) {
       setEditedStory({
         storyTitle: currentStory.storyTitle || '',
@@ -231,9 +231,6 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
     }
     setIsEditMode(false);
     setHasChanges(false);
-    
-    // Redirect back to the story page with the source parameter to ensure correct API is called
-    router.push(`/story/${storyId}?source=${source}`);
   };
 
   if (isLoading) {
@@ -274,51 +271,11 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
                     Edit Story
                   </Button>
                 )}
-                {/* Only show approve/reject buttons when coming from pending screen */}
-                {source === "pending" && (
-                  <>
-                    <Button
-                      variant="default"
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={handleApprove}
-                    >
-                      <Check className="h-4 w-4" />
-                      Approve
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={handleReject}
-                    >
-                      <X className="h-4 w-4" />
-                      Reject
-                    </Button>
-                  </>
-                )}
               </div>
             </>
           ) : (
-            <div className="w-full flex justify-between items-center mb-4">
+            <div className="w-full mb-4">
               <h1 className="text-2xl font-bold">Edit Story</h1>
-              <div className="flex gap-3">
-                <Button
-                  variant="default"
-                  className="flex items-center gap-2"
-                  onClick={handleSaveChanges}
-                  disabled={!hasChanges}
-                >
-                  <Save className="h-4 w-4" />
-                  Save Changes
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  onClick={handleCancelEdit}
-                >
-                  <X className="h-4 w-4" />
-                  Cancel
-                </Button>
-              </div>
             </div>
           )}
         </div>
@@ -393,6 +350,28 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
                 {currentStory.storyContent}
               </div>
             </div>
+
+            {/* Approve/Reject buttons at the bottom for pending stories */}
+            {source === "pending" && (
+              <div className="flex justify-end gap-3 pt-6 mt-6 border-t">
+                <Button
+                  variant="default"
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={handleApprove}
+                >
+                  <Check className="h-4 w-4" />
+                  Approve
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={handleReject}
+                >
+                  <X className="h-4 w-4" />
+                  Reject
+                </Button>
+              </div>
+            )}
           </>
         ) : (
           <div className="space-y-6">
@@ -468,27 +447,25 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
               </div>
             </div>
             
-            <div className="w-full flex items-center justify-center">
-              {(currentStory.profilePicRef || currentStory.coverPicRef) && (
-                <div className="mb-6 w-full md:w-[600px] aspect-[16/9] relative group">
-                  <img
-                    src={currentStory.profilePicRef || currentStory.coverPicRef}
-                    alt="Story Image"
-                    className="w-full h-full object-cover rounded-md"
-                  />
-                  <div className="absolute top-2 right-2 flex gap-2">
-                    <Button 
-                      size="sm" 
-                      variant="secondary" 
-                      className="opacity-90 hover:opacity-100"
-                      onClick={() => handleEditImage(currentStory.coverPicRef ? "cover" : "profile")}
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit Cover Image
-                    </Button>
-                  </div>
-                </div>
-              )}
+            {/* Save and Cancel buttons at the bottom */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={handleCancelEdit}
+              >
+                <X className="h-4 w-4" />
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                className="flex items-center gap-2"
+                onClick={handleSaveChanges}
+                disabled={!hasChanges}
+              >
+                <Save className="h-4 w-4" />
+                Save Changes
+              </Button>
             </div>
           </div>
         )}

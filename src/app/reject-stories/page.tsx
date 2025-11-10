@@ -170,7 +170,7 @@ export default function RejectPage() {
       <div className="bg-card rounded-lg shadow-md p-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <SearchInput
-            placeholder="Search rejected stories..."
+            placeholder="Search stories by title/author..."
             value={searchText}
             onSearch={handleSearch}
             onClear={handleClearSearch}
@@ -225,7 +225,7 @@ export default function RejectPage() {
                 <tbody>
                   {rejectedStories.map((story) => (
                     <tr key={story._id} className="border-b hover:bg-muted/50">
-                      <td className="py-3 px-4 font-medium">
+                      <td className="py-3 px-4 font-medium cursor-pointer" onClick={() => handleViewStory(story._id)}>
                         {story.storyTitle}
                       </td>
                       <td className="py-3 px-4">{story.userName}</td>
