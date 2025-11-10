@@ -263,16 +263,17 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
             <>
               <h1 className="text-3xl font-bold">{currentStory.storyTitle}</h1>
               <div className="flex gap-3 flex-wrap">
-                {/* Edit button always visible */}
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 cursor-pointer"
-                  onClick={() => setIsEditMode(true)}
-                >
-                  <Edit className="h-4 w-4" />
-                  Edit Story
-                </Button>
-                
+                {/* Edit button only visible if not coming from reject screen */}
+                {source !== "reject" && (
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => setIsEditMode(true)}
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit Story
+                  </Button>
+                )}
                 {/* Only show approve/reject buttons when coming from pending screen */}
                 {source === "pending" && (
                   <>
