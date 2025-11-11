@@ -276,6 +276,16 @@ const Header: React.FC<HeaderProps> = ({
 
 
 
+                  {/* Change Password Button (Desktop) */}
+                  <Link
+                    href="/change-password"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all duration-300 hover:scale-105 backdrop-blur-sm border cursor-pointer
+                dark:border-white/20 dark:text-white/90 dark:hover:bg-white/10 dark:hover:border-white/30
+                border-gray-300/40 text-gray-700 hover:bg-gray-100/20 hover:border-gray-400/50"
+                  >
+                    <PencilIcon className="w-5 h-5" />
+                    Change Password
+                  </Link>
                   {/* Logout Button */}
                   <button
                     onClick={handleLogout}
@@ -337,6 +347,15 @@ const Header: React.FC<HeaderProps> = ({
                     </div>
 
 
+                    {/* Change Password Button (Mobile) */}
+                    <Link
+                      href="/change-password"
+                      className="flex items-center gap-3 py-3 px-3 rounded-xl transition-colors duration-200 
+                    dark:hover:bg-white/10 hover:bg-gray-100/20 cursor-pointer"
+                    >
+                      <PencilIcon className="w-5 h-5" />
+                      <span className="text-sm font-medium dark:text-white/90 text-gray-700">Change Password</span>
+                    </Link>
                     {/* Logout Button (mobile) */}
                     <div
                       onClick={handleLogout}

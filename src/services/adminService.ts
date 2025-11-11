@@ -72,6 +72,15 @@ export interface ApproveRejectResponse {
 
 // Create axios config - adjust headers as needed
 const getConfig = () => {
+  // Check if running on server side
+  if (typeof window === 'undefined') {
+    return {
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true",
+      },
+    };
+  }
   // Safely access localStorage only on client side
   const authStorage = localStorage.getItem("auth-storage");
 

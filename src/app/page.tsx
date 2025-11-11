@@ -16,6 +16,7 @@ import { useAuthStore } from "@/stores/auth";
 export default function DashboardPage() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const accessToken = useAuthStore((state) => state.accessToken);
 
   const {
     storiesInfo,
@@ -24,24 +25,27 @@ export default function DashboardPage() {
     fetchAllStoriesInfo,
   } = useAdminStore();
 
+  // Combined useEffect - check auth AND fetch data
   useEffect(() => {
-    // Check authentication first
-    if (!isAuthenticated) {
+    // If not authenticated, redirect immediately and don't fetch
+    if (!isAuthenticated || !accessToken) {
       router.replace("/login");
       return;
     }
-  }, [isAuthenticated, router]);
 
-  useEffect(() => {
+    // Only fetch if authenticated
     let mounted = true;
     const load = async () => {
-      await fetchAllStoriesInfo();
+      if (mounted) {
+        await fetchAllStoriesInfo();
+      }
     };
     load();
+
     return () => {
       mounted = false;
     };
-  }, [fetchAllStoriesInfo]);
+  }, [isAuthenticated, accessToken, router, fetchAllStoriesInfo]);
 
   const handleNavigate = (path: string) => {
     // Reset all pagination data before navigating
@@ -59,7 +63,12 @@ export default function DashboardPage() {
     router.push(path);
   };
 
-  // Show loading spinner while checking authentication
+  // Don't render anything if not authenticated
+  if (!isAuthenticated || !accessToken) {
+    return null; // or return a loading spinner
+  }
+
+  // Show loading spinner while fetching data
   if (storiesLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -98,11 +107,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold mb-8 text-foreground">Dashboard</h1>
 
-          {storiesLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : error ? (
+          {error ? (
             <div className="text-center text-destructive p-6 bg-destructive/10 rounded-lg">
               <p>{error}</p>
               <Button
