@@ -137,7 +137,7 @@ export const adminService = {
         `${API_BASE_URL}admin/update-story`,
         { 
           storyId,
-          profilePicRef: imageUrl,
+          coverPicRef: imageUrl,
           storiesType
         },
         getConfig()
