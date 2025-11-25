@@ -291,7 +291,7 @@ export default function ApprovePage() {
                             className="cursor-pointer border-black"
                           >
                             <ImageIcon className="h-4 w-4 mr-1" />
-                            {story.coverPicRef || story.profilePicRef ? 'Edit Cover' : 'Add Cover'}
+                            {story.coverPicRef ? 'Edit Cover' : 'Add Cover'}
                           </Button>
                         </div>
                       </td>

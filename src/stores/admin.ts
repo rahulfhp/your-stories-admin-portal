@@ -42,7 +42,7 @@ interface AdminState {
   approveSelectedStories: () => Promise<void>;
   rejectSelectedStories: () => Promise<void>;
   searchStories: (searchText: string, storiesType: string, page?: number, limit?: number) => Promise<void>;
-  updateStoryCoverImage: (storyId: string, profilePicRef: string, storiesType: 'pending' | 'approved') => Promise<void>;
+  updateStoryCoverImage: (storyId: string, coverPicRef: string, storiesType: 'pending' | 'approved') => Promise<void>;
   updateStory: (storyId: string, storiesType: 'pending' | 'approved', updateData: Partial<Story>) => Promise<void>;
   clearCache: (storyType: 'pending' | 'published' | 'rejected') => void;
 }
@@ -119,17 +119,17 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     }
   },
 
-  updateStoryCoverImage: async (storyId: string, profilePicRef: string, storiesType: 'pending' | 'approved') => {
+  updateStoryCoverImage: async (storyId: string, coverPicRef: string, storiesType: 'pending' | 'approved') => {
     set({ isLoading: true, error: null });
     try {
       // Use the API service but don't navigate or refresh the page
-      const response = await adminService.updateStoryCoverImage(storyId, profilePicRef, storiesType);
+      const response = await adminService.updateStoryCoverImage(storyId, coverPicRef, storiesType);
       
       if (response.success) {
         // Update the story in the appropriate list and cache
         const updateStoryInList = (stories: Story[]) => {
           return stories.map(story => 
-            story._id === storyId ? { ...story, coverImage: profilePicRef, profilePicRef: profilePicRef } : story
+            story._id === storyId ? { ...story, coverImage: coverPicRef, coverPicRef: coverPicRef } : story
           );
         };
         
@@ -139,7 +139,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
           pendingStories: updateStoryInList(state.pendingStories),
           rejectedStories: updateStoryInList(state.rejectedStories),
           currentStory: state.currentStory?._id === storyId 
-            ? { ...state.currentStory, coverImage: profilePicRef, profilePicRef: profilePicRef } 
+            ? { ...state.currentStory, coverImage: coverPicRef, coverPicRef: coverPicRef } 
             : state.currentStory,
           isLoading: false
         }));

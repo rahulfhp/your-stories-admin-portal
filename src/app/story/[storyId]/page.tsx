@@ -127,7 +127,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
     setConfirmAction(null);
   };
   
-  const handleEditImage = (type: "profile" | "cover") => {
+  const handleEditImage = (type: "cover") => {
     setImageEditType(type);
     setIsImageModalOpen(true);
   };
@@ -314,10 +314,10 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
             </div>
 
             <div className="w-full flex items-center justify-center">
-              {(currentStory.profilePicRef || currentStory.coverPicRef) && (
+              {(currentStory.coverPicRef) && (
                 <div className="mb-6 w-full md:w-[600px] aspect-[16/9] relative group">
                   <img
-                    src={currentStory.profilePicRef || currentStory.coverPicRef}
+                    src={currentStory.coverPicRef}
                     alt="Story Image"
                     className="w-full h-full object-cover rounded-md"
                   />
@@ -326,7 +326,7 @@ export default function StoryDetailPage({ params }: StoryDetailPageProps) {
                       size="sm" 
                       variant="secondary" 
                       className="opacity-90 hover:opacity-100"
-                      onClick={() => handleEditImage(currentStory.coverPicRef ? "cover" : "profile")}
+                      onClick={() => handleEditImage("cover")}
                     >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit Cover Image
